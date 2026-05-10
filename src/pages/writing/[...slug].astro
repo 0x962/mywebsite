@@ -1,0 +1,48 @@
+---
+import Layout from '../../components/Layout.astro';
+import { getCollection, render } from 'astro:content';
+import { readingMinutes } from '../../utils/reading.ts';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+const minutes = readingMinutes(post.body ?? '');
+---
+<Layout
+  title={`${post.data.title} — Navid Khan`}
+  description={post.data.summary}
+  ogType="article"
+  publishedTime={post.data.date.toISOString()}
+>
+  <div class="manuscript">
+    <aside class="gutter">
+      <div>{fmt(post.data.date)}</div>
+    </aside>
+
+    <main class="content">
+      <h1 class="article-title">{post.data.title}</h1>
+      <div class="article-meta">
+        <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
+        <span aria-hidden="true"> · </span>
+        <span>{minutes} min read</span>
+      </div>
+      <article class="article-body" data-marginalia-root>
+        <Content />
+        <div class="article-end" aria-hidden="true">§</div>
+      </article>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import '../../scripts/marginalia.ts';
+</script>

@@ -1,0 +1,31 @@
+---
+import Layout from '../components/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 5);
+
+const fmt = (d: Date) =>
+  d.toISOString().slice(0, 10);
+---
+<Layout title="Navid Khan">
+  <div class="manuscript">
+    <aside class="gutter"></aside>
+    <main class="content">
+      <span class="section-label">— Recent writing</span>
+      <div class="archive-list">
+        {posts.map((p) => (
+          <a class="archive-item" href={`/writing/${p.id}/`}>
+            <div class="archive-date">{fmt(p.data.date)}</div>
+            <div class="archive-title">{p.data.title}</div>
+            <div class="archive-summary">{p.data.summary}</div>
+          </a>
+        ))}
+        {posts.length === 0 && (
+          <div class="archive-summary">Nothing published yet — check back soon.</div>
+        )}
+      </div>
+    </main>
+  </div>
+</Layout>

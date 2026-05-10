@@ -1,0 +1,179 @@
+---
+import Layout from '../components/Layout.astro';
+import EmailRotator from '../components/EmailRotator.tsx';
+import Term from '../components/Term.astro';
+import Note from '../components/Note.astro';
+---
+<Layout
+  title="About — Navid Khan"
+  description="Senior software engineer in Oakville, Ontario."
+>
+  <div class="manuscript">
+    <aside class="gutter"></aside>
+    <main class="content">
+      <header class="page-header">
+        <h1 class="page-title">nvdk</h1>
+        <span class="section-label">— About</span>
+      </header>
+      <div class="about-body" data-marginalia-root>
+        <p>
+          Hi, I'm Navid.
+        </p>
+
+        <p>
+          I grew up in <Term id="siliguri">Siliguri</Term> &mdash; a city in the foothills of the Himalayas, in <Term id="west-bengal">West Bengal</Term>, India.
+        </p>
+
+        <Note id="siliguri" label="SILIGURI">
+          <img class="note-map" src="/images/siliguri-map.png" alt="Map of South Asia with Siliguri marked between Nepal, Bhutan, and Bangladesh" loading="lazy" />
+          <p>Siliguri (/sɪˈliˌɡʊri/; Bengali: [ʃiliɡuɽi]), also known as Shiliguri, is a major tier-II city in West Bengal.</p>
+          <p>Known as the &ldquo;Gateway of Northeast India,&rdquo; it sits on the banks of the Mahananda in the foothills of the Himalayas.</p>
+          <p>Strategically important in West Bengal &mdash; it has convenient access to three international borders: Nepal, Bangladesh, and Bhutan.</p>
+        </Note>
+
+        <Note id="west-bengal" label="WEST BENGAL">
+          <p>A state in eastern India, capital Kolkata. Borders Nepal, Bhutan, and Bangladesh.</p>
+          <p>Famous for its literary and cinematic tradition (Tagore, Ray); home to about 100 million people.</p>
+        </Note>
+
+        <p>
+          It was a quiet town with great weather, back before global warming. Now Siliguri is almost always boiling, like the rest of the country.
+        </p>
+
+        <p>
+          There were coconut trees everywhere. I remember one in particular &mdash; planted right outside our apartment building, it grew up with us. When we moved in, its leaves barely reached my second-floor window (in India, floors are zero-indexed: the floor on the ground is the ground floor, number zero. Which is, of course, the correct way to do it. North America counts from one). By the time I was in high school the tree was taller than the building. We'd tug at its giant leaves and rock the whole thing until a coconut fell, then steal a screwdriver and a hammer from my dad's toolkit and punch three holes through the shell to drain the water.
+        </p>
+
+        <figure class="bio-figure-vignette">
+          <div class="image-wrap"><img src="/images/siliguri-rooftop.jpg" alt="On the rooftop next to the coconut palm" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+          <figcaption>On the rooftop, with the tree &mdash; recent visit</figcaption>
+        </figure>
+
+        <p>
+          When I think of that coconut tree, I'm also reminded of the street we lived on and the shop at the intersection &mdash; which doubled as our bus stop. We'd wait there early every morning for the school bus, which was actually a regular city bus the rest of the day. Once school drop-off was done, the driver would swap its sign and shuttle between points around town until pickup. The destinations and fares were painted on the outside; only the school-bus board went up while it was on school duty.
+        </p>
+
+        <p>
+          Inside it was dark and dingy. There was a TV up front and speakers mounted on the roof, and the driver played music the whole way &mdash; mostly off the radio. That's how I kept up with pop and Bollywood. RJ Naved was popular at the time &mdash; same name as me, different spelling, and he'd often be on. It took about an hour each way.
+        </p>
+
+        <figure class="bio-figure-vignette">
+          <div class="image-wrap"><img src="/images/siliguri-shop.jpg" alt="The shop outside our house that doubled as our bus stop" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+          <figcaption>The shop, on a recent visit</figcaption>
+        </figure>
+
+        <p>
+          There was a big, dusty playground nearby with a few half-broken rides. We'd cycle there sometimes. I spent most of my childhood on a bicycle &mdash; first a tiny red one, then a bigger black one &mdash; riding to every friend's house in town. I still remember the entire map of Siliguri in my head.
+        </p>
+
+        <div class="bio-figure-trio">
+          <figure>
+            <div class="image-wrap"><img src="/images/siliguri-city.jpg" alt="Aerial view of Siliguri" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+            <figcaption>Siliguri, India</figcaption>
+          </figure>
+          <figure>
+            <div class="image-wrap"><img src="/images/siliguri-tea.jpg" alt="Tea gardens around Siliguri" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+            <figcaption>Tea gardens nearby</figcaption>
+          </figure>
+          <figure>
+            <div class="image-wrap"><img src="/images/siliguri-bridge.jpg" alt="Coronation Bridge over the Teesta near Siliguri" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+            <figcaption>Coronation Bridge over the Teesta</figcaption>
+          </figure>
+        </div>
+
+        <p>
+          I haven't gotten that familiar with any city since. I lived in the Delhi&ndash;Gurgaon area for about ten years after high school, and I learned the routes between home and work and a few friends well enough, but never the whole city. Part of that, I think, is just maps &mdash; once your phone holds the map for you, you stop building one in your head.
+        </p>
+
+        <p>
+          In 2023, I moved to Toronto, Canada.
+        </p>
+
+        <p>
+          I live here with <strong>Aditi</strong>, who I'm married to. I'm extremely proud of her, and of the work she does at <a href="https://womenfirstfund.org/" rel="noopener">Women First</a>. I keep telling her to put something on <a href="https://aditipadiyar.com" rel="noopener">aditipadiyar.com</a> &mdash; you might find something there. We also have two cats, <strong>Obi</strong> and <strong>Zuzu</strong> &mdash; they're the soul of my life.
+        </p>
+
+        <p>
+          I like it here. The only thing I really miss is 220&nbsp;V &mdash; I don't actually know if that's accurate, I probably should know better as an engineer, but microwaves felt more powerful and hair dryers worked better. <span class="claude-answer">(Claude says: yes &mdash; India's 230&nbsp;V mains let the same wire carry more wattage. Indian hair dryers comfortably hit 2000&nbsp;W; North American 15&nbsp;A circuits cap around 1800&nbsp;W and most appliances stay well below. You're right.)</span>
+        </p>
+
+        <p>
+          More than anything, I like that the country isn't built on the back of the poor. You could theoretically afford a great life in India because everything is so cheap &mdash; but everything is cheap because it's stolen from the poor. Construction is cheap because laborers are paid barely a living wage, not even a survival wage. People keep house help, drivers, security guards because, again, those people are paid peanuts. Shopping is cheap because it's cheap to hire people to run shops. The West doesn't come with those luxuries, but I prefer the better distribution of wealth.
+        </p>
+
+        <p>
+          I walk a lot more here. The city makes it easy.
+        </p>
+
+        <div class="section-break" aria-hidden="true">· · ·</div>
+
+        <p>
+          I have been a software engineer for 12 years. Like a lot of engineers, I started out teaching myself, and I've taught myself most of what I know since. I'm proud of that.
+        </p>
+
+        <p>
+          I absolutely love building. There's probably nothing I enjoy more. And like a lot of us right now, I'm suffering from a serious case of LLM Psychosis &mdash; there's too much possibility, I want to be building all the time. I'm burning tokens constantly.
+        </p>
+
+        <p>
+          One of my favorite ways to relax is to close my eyes and design the most obscure machines I can &mdash; ones that could never actually be built.
+        </p>
+
+        <p>
+          I don't remember ever making a conscious decision to start a startup. I just wanted to build, and one thing led to another. I was already building in university &mdash; nothing there was actually about computer science, at least not in the first year. At some point I was spending way more time on my own code than on whatever I was supposed to be doing. I hated math by then anyway.
+        </p>
+
+        <p>
+          So I dropped out of <Term id="niet">Noida Institute of Engineering and Technology</Term> (🤮) and started an IT services firm in Gurgaon, India called <strong>Big Drop</strong>. It was <a href="https://inc42.com/buzz/appworks-acquires-bigdrop/" rel="noopener">acquired</a> a few years later.
+        </p>
+
+        <Note id="niet" label="NIET">
+          <p><a href="https://niet.co.in/" rel="noopener">Noida Institute of Engineering and Technology</a>, in Greater Noida, India.</p>
+          <p>Coincidentally &mdash; said fast &mdash; it sounds like NIIT, which is actually a great institute.</p>
+          <p>Shitty. Hated it.</p>
+          <p>The experience shaped a lot of what I now believe about education &mdash; and especially about the Indian system, which makes it so much harder than it should be for hardworking people to actually become successful.</p>
+        </Note>
+
+        <figure class="bio-figure">
+          <div class="image-wrap"><img src="/images/niet.webp" alt="Aerial view of NIET campus" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+          <figcaption>NIET, Greater Noida</figcaption>
+        </figure>
+
+        <figure class="bio-figure">
+          <div class="image-wrap"><img src="/images/bigdrop-team.jpg" alt="The Big Drop / AppWorks team" loading="lazy" onerror="this.closest('figure').style.display='none'" /></div>
+          <figcaption>Big Drop, post-acquisition by AppWorks</figcaption>
+        </figure>
+
+        <p>
+          After that I tried <strong>Square1</strong> &mdash; meant to be Shopify for India, before Shopify itself got big there. It went through India Accelerator and the Global Accelerator Network. It didn't make it.
+        </p>
+
+        <p>
+          These days I work at <Term id="canary">Canary Technologies</Term>, on software for hotels &mdash; I joined as the sixth engineer and twenty-first employee. It's where I learned to be a serious software engineer; most of the principles I hold close to heart now come from my time there.
+        </p>
+
+        <p>
+          Like everyone else in the industry right now, I'm excited about what AI has unlocked, and I spend a lot of time trying to figure out how to use it to reliably ship production code.
+        </p>
+
+        <Note id="canary" label="CANARY TECHNOLOGIES">
+          <p><a href="https://www.canarytechnologies.com/" rel="noopener">Canary Technologies</a>. Builds software for hotels.</p>
+          <p>Used by Four Seasons, Wyndham, Ace Hotel Group, and others.</p>
+          <p>Y Combinator (S18). Headquartered in New York; about 150 people.</p>
+        </Note>
+
+        <p>
+          Software has unlocked a lot in my life. It's my greatest passion. When I'm exhausted from work, I code.
+        </p>
+
+        <p>
+          Reach me at <EmailRotator client:load />.
+        </p>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import '../scripts/marginalia.ts';
+</script>
