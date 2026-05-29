@@ -8,9 +8,14 @@
  * Left: the page being edited — just a placeholder ("some website"), not
  * the point. Right: the product — a real chat with a message thread and
  * an input box, the actual thing worth showing.
+ *
+ * `plain` drops the prose-column breakout (negative margins) so it can sit
+ * inside a fixed-width <Place> on the open canvas.
  */
+interface Props { plain?: boolean; }
+const { plain = false } = Astro.props;
 ---
-<figure class="wf">
+<figure class:list={['wf', { 'wf-plain': plain }]}>
   <div class="wf-window">
     <div class="wf-titlebar">
       <span class="wf-dots"><i></i><i></i><i></i></span>
@@ -67,6 +72,12 @@
     margin: 3rem 0 3rem calc(-1 * (var(--gutter-width) + 40px));
     font-family: var(--font-sans);
     color: var(--ink);
+  }
+
+  /* Canvas mode: no prose-column breakout — fill the <Place>. */
+  .wf-plain {
+    width: 100%;
+    margin: 0;
   }
 
   /* Signature PaperCSS wobbly border. */

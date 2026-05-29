@@ -1,19 +1,21 @@
 /**
- * Dev-only canvas drag editor. Mounted only under import.meta.env.DEV (see
- * Canvas.astro), so it never ships to production.
+ * Dev-only canvas editor. Mounted only under import.meta.env.DEV with `?edit`
+ * in the URL (see Canvas.astro), so it never ships to production.
  *
- *   • drag a placed item to move it
- *   • Shift-drag to rotate it
- *   • each drop saves the CURRENT breakpoint's coords to
+ *   • click an element to select it (blue outline + a rotate knob appears above)
+ *   • drag its body to move it
+ *   • drag the knob to rotate it around its center (hold Shift to snap to 15°)
+ *   • every drop saves the CURRENT breakpoint's { x, y, rotate } to
  *     src/data/layouts/<page>.json via the dev-only /__canvas/save endpoint
  *
- * The breakpoint is derived from the viewport width — resize the window to edit
- * the desktop / tablet / mobile arrangement; the toolbar shows which one is live.
+ * Breakpoint follows the viewport width — resize to edit desktop / tablet /
+ * mobile; the toolbar shows which one is live.
  */
 type Breakpoint = 'desktop' | 'tablet' | 'mobile';
 const SUFFIX: Record<Breakpoint, string> = { desktop: 'd', tablet: 't', mobile: 'm' };
 
 const breakpointFor = (w: number): Breakpoint => (w < 640 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop');
+const suffixNow = () => SUFFIX[breakpointFor(window.innerWidth)];
 
 function readVar(el: HTMLElement, name: string): number {
   return parseFloat(getComputedStyle(el).getPropertyValue(name)) || 0;
@@ -28,6 +30,12 @@ async function save(page: string, id: string, breakpoint: Breakpoint, patch: Rec
   if (!res.ok) throw new Error(await res.text());
 }
 
+interface Toolbar {
+  setBreakpoint(bp: Breakpoint): void;
+  setStatus(text: string, kind?: 'ok' | 'busy' | 'err'): void;
+  setActive(text: string): void;
+}
+
 let mounted = false;
 
 export function initCanvasEditor(): void {
@@ -37,87 +45,117 @@ export function initCanvasEditor(): void {
   injectStyles();
   const ui = buildToolbar();
 
-  document.querySelectorAll<HTMLElement>('[data-canvas][data-cv-page]').forEach((stage) => {
-    const page = stage.dataset.cvPage!;
-    wireStage(stage, page, ui);
-  });
-}
+  // single rotate knob, repositioned over the selected element
+  const knob = document.createElement('div');
+  knob.className = 'cv-rot-knob';
+  knob.title = 'drag to rotate (Shift = snap 15°)';
+  knob.textContent = '⟳';
+  knob.style.display = 'none';
+  document.body.appendChild(knob);
 
-interface Toolbar {
-  setBreakpoint(bp: Breakpoint): void;
-  setStatus(text: string, kind?: 'ok' | 'busy' | 'err'): void;
-  setActive(text: string): void;
-}
+  let selected: HTMLElement | null = null;
+  type Ctx =
+    | { mode: 'move'; el: HTMLElement; s: string; sx: number; sy: number; ox: number; oy: number; scale: number; moved: boolean }
+    | { mode: 'rotate'; el: HTMLElement; s: string; cx: number; cy: number; start: number; orot: number; moved: boolean };
+  let ctx: Ctx | null = null;
 
-function wireStage(stage: HTMLElement, page: string, ui: Toolbar) {
-  let drag: {
-    el: HTMLElement;
-    id: string;
-    bp: Breakpoint;
-    sx: number;
-    sy: number;
-    ox: number;
-    oy: number;
-    orot: number;
-    scale: number;
-    moved: boolean;
-  } | null = null;
+  const stageOf = (el: HTMLElement) => el.closest<HTMLElement>('[data-canvas][data-cv-page]');
 
-  stage.addEventListener('pointerdown', (e) => {
-    const el = (e.target as HTMLElement).closest<HTMLElement>('.cv-place[data-cv-id]');
-    if (!el || !stage.contains(el)) return;
-    const bp = breakpointFor(window.innerWidth);
-    const s = SUFFIX[bp];
-    drag = {
-      el,
-      id: el.dataset.cvId!,
-      bp,
-      sx: e.clientX,
-      sy: e.clientY,
-      ox: readVar(el, `--x-${s}`),
-      oy: readVar(el, `--y-${s}`),
-      orot: readVar(el, `--rot-${s}`),
-      scale: readVar(stage, '--cv-scale') || 1,
-      moved: false,
-    };
-    try {
-      el.setPointerCapture(e.pointerId);
-    } catch {
-      /* pointer may already be released (e.g. synthetic events) */
+  function positionKnob() {
+    if (!selected) {
+      knob.style.display = 'none';
+      return;
+    }
+    const r = selected.getBoundingClientRect();
+    knob.style.display = 'flex';
+    knob.style.left = `${r.left + r.width / 2}px`;
+    knob.style.top = `${r.top - 26}px`;
+  }
+
+  function select(el: HTMLElement | null) {
+    if (selected) selected.classList.remove('cv-selected');
+    selected = el;
+    if (el) el.classList.add('cv-selected');
+    positionKnob();
+  }
+
+  document.addEventListener('pointerdown', (e) => {
+    const target = e.target as HTMLElement;
+
+    // start a rotation when grabbing the knob
+    if (target === knob && selected) {
+      const r = selected.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      ctx = {
+        mode: 'rotate',
+        el: selected,
+        s: suffixNow(),
+        cx,
+        cy,
+        start: Math.atan2(e.clientY - cy, e.clientX - cx),
+        orot: readVar(selected, `--rot-${suffixNow()}`),
+        moved: false,
+      };
+      knob.setPointerCapture?.(e.pointerId);
+      e.preventDefault();
+      return;
+    }
+
+    const el = target.closest<HTMLElement>('.cv-place[data-cv-id]');
+    if (el && stageOf(el)) {
+      select(el);
+      const s = suffixNow();
+      ctx = {
+        mode: 'move',
+        el,
+        s,
+        sx: e.clientX,
+        sy: e.clientY,
+        ox: readVar(el, `--x-${s}`),
+        oy: readVar(el, `--y-${s}`),
+        scale: readVar(stageOf(el)!, '--cv-scale') || 1,
+        moved: false,
+      };
+    } else if (!target.closest('.cv-editor-bar') && target !== knob) {
+      select(null);
     }
   });
 
-  stage.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    const dx = e.clientX - drag.sx;
-    const dy = e.clientY - drag.sy;
-    if (!drag.moved && Math.hypot(dx, dy) < 3) return;
-    drag.moved = true;
-    drag.el.classList.add('cv-editing');
-    const s = SUFFIX[drag.bp];
-
-    if (e.shiftKey) {
-      const rot = Math.round((drag.orot + dx * 0.3) * 10) / 10;
-      drag.el.style.setProperty(`--rot-${s}`, String(rot));
-      ui.setActive(`#${drag.id} · rotate ${rot}°`);
+  document.addEventListener('pointermove', (e) => {
+    if (!ctx) return;
+    if (ctx.mode === 'move') {
+      const dx = e.clientX - ctx.sx;
+      const dy = e.clientY - ctx.sy;
+      if (!ctx.moved && Math.hypot(dx, dy) < 3) return;
+      ctx.moved = true;
+      ctx.el.classList.add('cv-editing');
+      const x = Math.round(ctx.ox + dx / ctx.scale);
+      const y = Math.round(ctx.oy + dy / ctx.scale);
+      ctx.el.style.setProperty(`--x-${ctx.s}`, String(x));
+      ctx.el.style.setProperty(`--y-${ctx.s}`, String(y));
+      ui.setActive(`#${ctx.el.dataset.cvId} · ${x}, ${y}`);
     } else {
-      const x = Math.round(drag.ox + dx / drag.scale);
-      const y = Math.round(drag.oy + dy / drag.scale);
-      drag.el.style.setProperty(`--x-${s}`, String(x));
-      drag.el.style.setProperty(`--y-${s}`, String(y));
-      ui.setActive(`#${drag.id} · ${x}, ${y}`);
+      const ang = Math.atan2(e.clientY - ctx.cy, e.clientX - ctx.cx);
+      let deg = ctx.orot + ((ang - ctx.start) * 180) / Math.PI;
+      if (e.shiftKey) deg = Math.round(deg / 15) * 15;
+      deg = Math.round(deg * 10) / 10;
+      ctx.moved = true;
+      ctx.el.style.setProperty(`--rot-${ctx.s}`, String(deg));
+      ui.setActive(`#${ctx.el.dataset.cvId} · ${deg}°`);
     }
+    positionKnob();
     e.preventDefault();
   });
 
-  const finish = async (e: PointerEvent) => {
-    if (!drag) return;
-    const d = drag;
-    drag = null;
-    d.el.classList.remove('cv-editing');
-    if (!d.moved) return; // a plain click — let links navigate
+  const finish = async () => {
+    if (!ctx) return;
+    const c = ctx;
+    ctx = null;
+    c.el.classList.remove('cv-editing');
+    if (!c.moved) return; // a plain click — let links/selection stand
 
-    // swallow the click that follows this drag so post-it links don't fire
+    // swallow the click that follows a drag so links don't fire
     const swallow = (ev: Event) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -125,23 +163,29 @@ function wireStage(stage: HTMLElement, page: string, ui: Toolbar) {
     document.addEventListener('click', swallow, { capture: true, once: true });
     setTimeout(() => document.removeEventListener('click', swallow, { capture: true }), 0);
 
-    const s = SUFFIX[d.bp];
+    const stage = stageOf(c.el);
+    if (!stage) return;
+    const page = stage.dataset.cvPage!;
+    const id = c.el.dataset.cvId!;
+    const bp = breakpointFor(window.innerWidth);
     const patch = {
-      x: readVar(d.el, `--x-${s}`),
-      y: readVar(d.el, `--y-${s}`),
-      rotate: readVar(d.el, `--rot-${s}`),
+      x: readVar(c.el, `--x-${c.s}`),
+      y: readVar(c.el, `--y-${c.s}`),
+      rotate: readVar(c.el, `--rot-${c.s}`),
     };
     ui.setStatus('saving…', 'busy');
     try {
-      await save(page, d.id, d.bp, patch);
-      ui.setStatus(`saved ${d.id} → ${d.bp}`, 'ok');
+      await save(page, id, bp, patch);
+      ui.setStatus(`saved ${id} → ${bp}`, 'ok');
     } catch (err) {
       ui.setStatus(`save failed: ${err}`, 'err');
     }
   };
 
-  stage.addEventListener('pointerup', finish);
-  stage.addEventListener('pointercancel', finish);
+  document.addEventListener('pointerup', finish);
+  document.addEventListener('pointercancel', finish);
+  window.addEventListener('scroll', positionKnob, { passive: true });
+  window.addEventListener('resize', positionKnob);
 }
 
 function buildToolbar(): Toolbar {
@@ -153,7 +197,7 @@ function buildToolbar(): Toolbar {
       <strong>canvas editor</strong>
       <span class="cv-editor-bp"></span>
     </div>
-    <div class="cv-editor-hint">drag to move · shift-drag to rotate</div>
+    <div class="cv-editor-hint">click to select · drag to move · drag the ⟳ knob to rotate (Shift snaps)</div>
     <div class="cv-editor-active">—</div>
     <div class="cv-editor-status">ready</div>`;
   document.body.appendChild(root);
@@ -184,14 +228,24 @@ function buildToolbar(): Toolbar {
 function injectStyles(): void {
   const css = `
     .cv-place[data-cv-id] { cursor: grab; }
-    .cv-place[data-cv-id]:hover { outline: 1px dashed rgba(59,130,246,0.7); outline-offset: 4px; }
-    .cv-place[data-cv-id] .cv-scribble { pointer-events: auto; }
-    .cv-place.cv-editing { cursor: grabbing; outline: 1px solid #3b82f6 !important; }
+    .cv-place[data-cv-id]:hover { outline: 1px dashed rgba(59,130,246,0.5); outline-offset: 4px; }
+    .cv-place[data-cv-id] .cv-scribble, .cv-place[data-cv-id] .cv-doodle { pointer-events: auto; }
+    .cv-place.cv-selected { outline: 1px solid #3b82f6 !important; outline-offset: 4px; }
+    .cv-place.cv-editing { cursor: grabbing; }
+    .cv-rot-knob {
+      position: fixed; z-index: 100000;
+      width: 22px; height: 22px; margin: -11px 0 0 -11px;
+      align-items: center; justify-content: center;
+      border-radius: 50%; background: #3b82f6; color: #fff;
+      font-size: 13px; line-height: 1; cursor: grab; user-select: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .cv-rot-knob:active { cursor: grabbing; }
     .cv-editor-bar {
       position: fixed; left: 16px; bottom: 16px; z-index: 99999;
       font-family: var(--font-mono, monospace); font-size: 11px; line-height: 1.5;
       color: #d4d4d8; background: rgba(10,10,11,0.92); border: 1px solid #27272a;
-      border-radius: 6px; padding: 8px 10px; min-width: 200px;
+      border-radius: 6px; padding: 8px 10px; min-width: 200px; max-width: 320px;
       backdrop-filter: blur(6px); pointer-events: none; user-select: none;
     }
     .cv-editor-row { display: flex; align-items: center; gap: 7px; }

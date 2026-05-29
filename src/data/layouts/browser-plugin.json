@@ -1,8 +1,8 @@
 {
   "lede": {
     "desktop": {
-      "x": 59,
-      "y": 341,
+      "x": 316,
+      "y": 354,
       "rotate": 0
     }
   },
@@ -15,22 +15,22 @@
   },
   "card-demos": {
     "desktop": {
-      "x": 62,
-      "y": 152,
+      "x": 296,
+      "y": 162,
       "rotate": -1
     }
   },
   "card-tickets": {
     "desktop": {
-      "x": 379,
-      "y": 145,
+      "x": 661,
+      "y": 151,
       "rotate": 1
     }
   },
   "twoways": {
     "desktop": {
-      "x": 51,
-      "y": 447,
+      "x": 382,
+      "y": 471,
       "rotate": -1
     }
   },
@@ -43,8 +43,8 @@
   },
   "fork-arrow-a": {
     "desktop": {
-      "x": 244,
-      "y": 470,
+      "x": 485,
+      "y": 521,
       "rotate": 28
     }
   },
@@ -64,8 +64,8 @@
   },
   "lands": {
     "desktop": {
-      "x": 59,
-      "y": 1301,
+      "x": 61,
+      "y": 1928,
       "rotate": 0
     }
   },
@@ -74,6 +74,34 @@
       "x": 64,
       "y": 19,
       "rotate": 0
+    }
+  },
+  "flow-a": {
+    "desktop": {
+      "x": 138,
+      "y": 1304,
+      "rotate": -1
+    }
+  },
+  "flow-b": {
+    "desktop": {
+      "x": 804,
+      "y": 1472,
+      "rotate": 1
+    }
+  },
+  "mockup": {
+    "desktop": {
+      "x": 681,
+      "y": 1038,
+      "rotate": -1
+    }
+  },
+  "divider": {
+    "desktop": {
+      "x": 241,
+      "y": 932,
+      "rotate": 90
     }
   }
 }

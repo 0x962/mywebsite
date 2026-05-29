@@ -3,6 +3,8 @@ import Layout from '../../components/Layout.astro';
 import Canvas from '../../components/canvas/Canvas.astro';
 import Place from '../../components/canvas/Place.astro';
 import Scribble from '../../components/canvas/Scribble.astro';
+import Flow from '../../components/canvas/Flow.astro';
+import Mockup from '../../components/Mockup.astro';
 import { getEntry } from 'astro:content';
 import { loadLayout } from '../../utils/layout';
 
@@ -36,7 +38,7 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numer
   jsonLd={blogPostingLd}
 >
   <div class="canvas-page">
-    <Canvas page="browser-plugin" width={1280} height={1520} tabletHeight={1820} mobileHeight={2740}>
+    <Canvas page="browser-plugin" width={1280} height={2180} tabletHeight={2740} mobileHeight={4320}>
       {/* ---- Header ---- */}
       <Place
         id="title" saved={layout.title}
@@ -55,8 +57,9 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numer
         mobile={{ x: 20, y: 148, w: 340 }}
       >
         <p class="bp-lede">
-          Same job both times: produce a modified version of our UI, fast, without a
-          designer or engineer hand-building each one.
+          Same job both times: a modified version of our UI, fast, without a designer or engineer
+          hand-building each one. I keep running into this at Canary, and I'm not convinced we've
+          cracked it.
         </p>
       </Place>
 
@@ -167,8 +170,8 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numer
       <Place
         id="lands" saved={layout.lands}
         x={72} y={1300} w={1130}
-        tablet={{ x: 40, y: 1569, w: 680 }}
-        mobile={{ x: 20, y: 2384, w: 340 }}
+        tablet={{ x: 40, y: 2486, w: 680 }}
+        mobile={{ x: 20, y: 3953, w: 340 }}
       >
         <div class="bp-track">
           <span class="bp-label">Where it lands</span>
@@ -200,6 +203,56 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numer
         tablet={{ x: 40, y: 1138, rotate: 0 }}
       >
         <Scribble type="line" w={760} h={14} seed={3} color="var(--border-color-strong)" />
+      </Place>
+
+      {/* ---- Visual artifacts (new — drag into place with ?edit) ---- */}
+
+      {/* The tool, sketched: the real page + a chat editing it (approach B) */}
+      <Place
+        id="mockup" saved={layout.mockup}
+        x={690} y={1640} rotate={-1} z={2} w={520}
+        tablet={{ x: 40, y: 1587, rotate: -1, w: 680 }}
+        mobile={{ x: 20, y: 2400, rotate: 0, w: 340 }}
+      >
+        <Mockup plain />
+      </Place>
+
+      {/* Pipeline A — copy & edit */}
+      <Place
+        id="flow-a" saved={layout['flow-a']}
+        x={96} y={1660} rotate={-1} z={2} w={300}
+        tablet={{ x: 40, y: 2122, rotate: -1, w: 300 }}
+        mobile={{ x: 30, y: 3235, rotate: 0, w: 300 }}
+      >
+        <Flow
+          label="A · copy & edit"
+          accent="var(--accent-color)"
+          steps={[
+            { text: 'real frontend' },
+            { text: 'static clone', flag: 'drifts ✕' },
+            { text: 'agent recolors' },
+            { text: 'demo per customer' },
+          ]}
+        />
+      </Place>
+
+      {/* Pipeline B — live edit */}
+      <Place
+        id="flow-b" saved={layout['flow-b']}
+        x={440} y={1700} rotate={1} z={2} w={300}
+        tablet={{ x: 400, y: 2122, rotate: 1, w: 300 }}
+        mobile={{ x: 30, y: 3594, rotate: 0, w: 300 }}
+      >
+        <Flow
+          label="B · live edit"
+          accent="var(--accent-color)"
+          steps={[
+            { text: 'the real page' },
+            { text: 'describe a change' },
+            { text: 'agent injects CSS / JS', flag: 'structural = hard' },
+            { text: "you're on the shipped thing" },
+          ]}
+        />
       </Place>
     </Canvas>
   </div>
@@ -237,10 +290,11 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numer
     color: var(--accent-color);
   }
   .bp-card {
-    border: 1px solid var(--border-color-strong);
+    border: 2px solid var(--border-color-strong);
     background: var(--code-bg);
-    border-radius: 3px;
-    padding: 14px 16px;
+    /* PaperCSS wobble — reads hand-drawn, matches the mockup + flow diagrams */
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    padding: 16px 18px;
   }
   .bp-card-tag {
     font-family: var(--font-mono);

@@ -62,7 +62,7 @@ const rnd = (i: number, s: number) => {
   return v - Math.floor(v);
 };
 const footerW = { desktop: 1280, tablet: 760, mobile: 380 };
-const bandTop = { desktop: 3470, tablet: 6240, mobile: 7900 };
+const bandTop = { desktop: 3500, tablet: 6580, mobile: 8210 };
 const BAND_H = 122;
 const footerPos = (dd: (typeof doodles)[number], i: number, bp: keyof typeof footerW, sx: number, sy: number) => {
   const w = footerW[bp];
@@ -122,169 +122,187 @@ const personLd = {
 
       <Place id="portrait" saved={layout.portrait}
         x={808} y={20} rotate={-3} z={4} w={250}
-        tablet={{ x: 260, y: 286, rotate: -3, w: 240 }}
-        mobile={{ x: 80, y: 360, rotate: -3, w: 220 }}>
+        tablet={{ x: 260, y: 289, rotate: -3, w: 240 }}
+        mobile={{ x: 80, y: 329, rotate: -3, w: 220 }}>
         <Polaroid src="/images/profile.png" alt="Portrait of Navid Khan" caption="me" />
       </Place>
 
       {/* ===== Act 1 — place ===== */}
       <Place id="t-intro" saved={layout['t-intro']}
         x={96} y={140} w={560}
-        tablet={{ x: 40, y: 95, w: 600 }}
-        mobile={{ x: 20, y: 81, w: 340 }}>
+        tablet={{ x: 40, y: 141, w: 600 }}
+        mobile={{ x: 20, y: 126, w: 340 }}>
         <div class="scrap-text">
-          <p>Hi, I'm Navid. I'm a software engineer (I think?). These days I mostly spend my
-          time battling LLM psychosis and trying to figure out how to use AI to still create
-          real software.</p>
-          <p>I grew up in <strong>Siliguri</strong> — a city in the foothills of the Himalayas,
-          in West Bengal, India.</p>
+          <p>Hi, I'm Navid. I'm a software engineer (I think?).</p>
+          <p>I grew up in <strong>Siliguri</strong> — a small city in the foothills of the
+          Himalayas, in West Bengal, India. It's a long way from here.</p>
         </div>
+      </Place>
+
+      {/* "(I think?)" annotation — arrow and note as separate items so each rotates on its own */}
+      <Place id="think-arrow" saved={layout['think-arrow']}
+        x={486} y={150} rotate={180} z={6}
+        tablet={{ x: 470, y: 150, rotate: 180 }}
+        mobile={{ x: 60, y: 214, rotate: 180 }}>
+        <Scribble type="arrow" w={64} h={38} seed={4} color="var(--text-secondary)" />
+      </Place>
+
+      <Place id="think-text" saved={layout['think-text']}
+        x={560} y={140} rotate={-3} z={6} w={210}
+        tablet={{ x: 545, y: 140, rotate: -3, w: 210 }}
+        mobile={{ x: 135, y: 206, rotate: -3, w: 210 }}>
+        <span class="scrap-hand">(AI has taken over)</span>
       </Place>
 
       <Place id="map" saved={layout.map}
         x={756} y={389} rotate={2} z={2} w={290}
-        tablet={{ x: 240, y: 631, rotate: 2, w: 280 }}
-        mobile={{ x: 40, y: 680, rotate: 2, w: 300 }}>
+        tablet={{ x: 240, y: 665, rotate: 2, w: 280 }}
+        mobile={{ x: 40, y: 675, rotate: 2, w: 300 }}>
         <Polaroid src="/images/siliguri-map.png" alt="Map of South Asia with Siliguri marked between Nepal, Bhutan, and Bangladesh" caption="South Asia — Siliguri marked" />
       </Place>
 
       <Place id="t-coconut" saved={layout['t-coconut']}
         x={112} y={347} rotate={0.4} w={560}
-        tablet={{ x: 40, y: 962, w: 600 }}
-        mobile={{ x: 20, y: 1031, w: 340 }}>
+        tablet={{ x: 40, y: 1025, w: 600 }}
+        mobile={{ x: 20, y: 1051, w: 340 }}>
         <div class="scrap-text">
-          <p>It was a quiet town with great weather, back before global warming. Now Siliguri is
-          almost always boiling, like the rest of the country.</p>
-          <p>There were coconut trees everywhere. I remember one in particular — planted right
-          outside our apartment building, it grew up with us. When we moved in, its leaves barely
-          reached my second-floor window (in India, floors are zero-indexed: the floor on the
-          ground is the ground floor, number zero — the correct way to do it. North America
-          counts from one). By the time I was in high school the tree was taller than the
-          building. We'd tug at its giant leaves and rock the whole thing until a coconut fell,
-          then steal a screwdriver and a hammer from my dad's toolkit and punch three holes
-          through the shell to drain the water.</p>
+          <p>It was a quiet town then, with weather that still knew how to behave — this was
+          before global warming taught it otherwise. Now Siliguri boils for most of the year, like
+          the rest of the country.</p>
+          <p>Coconut palms<Doodle name="palm" size={20} color="#8cc46a" seed={5} class="word-doodle" /> grew everywhere, leaning over walls and rooftops. One grew right outside
+          our building, and it grew up alongside me. When we moved in, its fronds barely reached my
+          second-floor window; by the time I finished school it had overtaken the building. We'd
+          reach out, catch a leaf, and rock the whole tree until a coconut came down — then take a
+          screwdriver and a hammer from my father's toolbox and punch three neat holes through the
+          shell to drink the water inside. <span class="muted">(In India the floor on the ground is
+          the ground floor — number zero. North America starts counting at one, which is, of course,
+          wrong.)</span></p>
         </div>
       </Place>
 
       <Place id="t-bus" saved={layout['t-bus']}
         x={88} y={763} rotate={-0.4} w={560}
-        tablet={{ x: 40, y: 1333, w: 600 }}
-        mobile={{ x: 20, y: 1665, w: 340 }}>
+        tablet={{ x: 40, y: 1412, w: 600 }}
+        mobile={{ x: 20, y: 1697, w: 340 }}>
         <div class="scrap-text">
-          <p>When I think of that coconut tree, I'm also reminded of the street we lived on and
-          the shop at the intersection — which doubled as our bus stop. We'd wait there early
-          every morning for the school bus, which was actually a regular city bus the rest of the
-          day. Once school drop-off was done, the driver would swap its sign and shuttle between
-          points around town until pickup.</p>
-          <p>Inside it was dark and dingy. There was a TV up front and speakers on the roof, and
-          the driver played music the whole way — mostly off the radio. That's how I kept up with
-          pop and Bollywood. RJ Naved was popular at the time — same name as me, different
-          spelling. It took about an hour each way.</p>
+          <p>Down the same road, a little shop at the corner doubled as our bus stop. Every morning
+          we waited there in the half-light for the school bus — really just a city bus, moonlighting.
+          Once the children were dropped off, the driver swapped the board on the front and spent the
+          day ferrying strangers around town, the fares painted along its flank, until it was time to
+          come back for us.</p>
+          <p>Inside it was dark and close, a small television up front and speakers wired along the
+          roof, music playing the whole way — mostly whatever the radio gave him. That's how I learned
+          my pop and my Bollywood. RJ Naved was big in those years; same name as me, spelled
+          differently, his voice filling the bus on the long ride. An hour there, an hour back.</p>
         </div>
       </Place>
 
       <Place id="t-bicycle" saved={layout['t-bicycle']}
         x={108} y={1150} rotate={0.5} w={560}
-        tablet={{ x: 40, y: 1704, w: 600 }}
-        mobile={{ x: 20, y: 2240, w: 340 }}>
+        tablet={{ x: 40, y: 1711, w: 600 }}
+        mobile={{ x: 20, y: 2167, w: 340 }}>
         <div class="scrap-text">
-          <p>There was a big, dusty playground nearby with a few half-broken rides. I spent most
-          of my childhood on a bicycle — first a tiny red one, then a bigger black one — riding to
-          every friend's house in town. I still remember the entire map of Siliguri in my head.</p>
+          <p>There was a wide, dusty playground nearby with a few half-broken rides, and I spent
+          most of my childhood on a bicycle — first a small red one, then a bigger black one —
+          riding to every friend's house in town. I still carry the entire map of Siliguri in my
+          head.</p>
         </div>
       </Place>
 
       {/* Siliguri trio — a row of small snapshots on desktop, stacked on narrow screens */}
       <Place id="p-city" saved={layout['p-city']}
         x={686} y={900} rotate={-3} z={2} w={158}
-        tablet={{ x: 267, y: 1855, rotate: -3, w: 226 }}
-        mobile={{ x: 40, y: 2477, rotate: -3, w: 300 }}>
+        tablet={{ x: 267, y: 1878, rotate: -3, w: 226 }}
+        mobile={{ x: 40, y: 2416, rotate: -3, w: 300 }}>
         <Polaroid src="/images/siliguri-city.jpg" alt="Aerial view of Siliguri" caption="Siliguri" />
       </Place>
 
       <Place id="p-tea" saved={layout['p-tea']}
         x={858} y={900} rotate={2} z={2} w={158}
-        tablet={{ x: 267, y: 2039, rotate: 2, w: 226 }}
-        mobile={{ x: 40, y: 2703, rotate: 2, w: 300 }}>
+        tablet={{ x: 267, y: 2101, rotate: 2, w: 226 }}
+        mobile={{ x: 40, y: 2681, rotate: 2, w: 300 }}>
         <Polaroid src="/images/siliguri-tea.jpg" alt="Tea gardens around Siliguri" caption="tea gardens" />
       </Place>
 
       <Place id="p-bridge" saved={layout['p-bridge']}
         x={1030} y={900} rotate={-2} z={2} w={158}
-        tablet={{ x: 235, y: 2223, rotate: -2, w: 290 }}
-        mobile={{ x: 30, y: 2929, rotate: -2, w: 320 }}>
+        tablet={{ x: 235, y: 2320, rotate: -2, w: 290 }}
+        mobile={{ x: 30, y: 2940, rotate: -2, w: 320 }}>
         <Polaroid src="/images/siliguri-bridge.jpg" alt="Coronation Bridge over the Teesta near Siliguri" caption="Coronation Bridge" />
       </Place>
 
       <Place id="t-move" saved={layout['t-move']}
         x={96} y={1316} rotate={-0.4} w={560}
-        tablet={{ x: 40, y: 2502, w: 600 }}
-        mobile={{ x: 20, y: 3231, w: 340 }}>
+        tablet={{ x: 40, y: 2628, w: 600 }}
+        mobile={{ x: 20, y: 3267, w: 340 }}>
         <div class="scrap-text">
-          <p>I haven't gotten that familiar with any city since. I lived in the Delhi–Gurgaon area
-          for about ten years after high school, and learned the routes between home and work and a
-          few friends — but never the whole city. Part of that is just maps: once your phone holds
-          the map for you, you stop building one in your head.</p>
-          <p>In 2023, I moved to Toronto, Canada.</p>
+          <p>I've never known a city that completely since. I spent about ten years in the
+          Delhi–Gurgaon sprawl after school and learned the routes between home and work and a
+          handful of friends, but never the whole of it. Part of that is just maps: once your phone
+          holds the map for you, you stop building one of your own.</p>
+          <p>In 2023, I moved to Toronto.</p>
         </div>
       </Place>
 
       <Place id="t-aditi" saved={layout['t-aditi']}
         x={104} y={1556} rotate={0.4} w={560}
-        tablet={{ x: 40, y: 2726, w: 600 }}
-        mobile={{ x: 20, y: 3542, w: 340 }}>
+        tablet={{ x: 40, y: 2868, w: 600 }}
+        mobile={{ x: 20, y: 3590, w: 340 }}>
         <div class="scrap-text">
-          <p>I live here with <span class="aditi-name"><strong>Aditi</strong><Scribble type="heart" w={14} h={12} color="#ff5d73" roughness={0.9} strokeWidth={1.4} seed={3} class="mh mh1" /><Scribble type="heart" w={10} h={9} color="#ff9ecb" roughness={0.9} strokeWidth={1.3} seed={5} class="mh mh2" /><Scribble type="heart" w={12} h={11} color="#ff5d73" roughness={0.9} strokeWidth={1.4} seed={7} class="mh mh3" /><Scribble type="heart" w={9} h={8} color="#ff9ecb" roughness={0.9} strokeWidth={1.3} seed={9} class="mh mh4" /></span>, who I'm married to. I'm extremely proud of
-          her, and of the work she does at <a href="https://womenfirstfund.org/" rel="noopener">Women First</a>.
-          I keep telling her to put something on <a href="https://aditipadiyar.com" rel="noopener">aditipadiyar.com</a> —
-          you might find something there. We also have two cats, <strong>Obi</strong> and
-          <strong>Zuzu</strong> — they're the soul of my life.</p>
+          <p>I live here with <span class="aditi-name"><strong>Aditi</strong><Scribble type="heart" w={14} h={12} color="#ff5d73" roughness={0.9} strokeWidth={1.4} seed={3} class="mh mh1" /><Scribble type="heart" w={10} h={9} color="#ff9ecb" roughness={0.9} strokeWidth={1.3} seed={5} class="mh mh2" /><Scribble type="heart" w={12} h={11} color="#ff5d73" roughness={0.9} strokeWidth={1.4} seed={7} class="mh mh3" /><Scribble type="heart" w={9} h={8} color="#ff9ecb" roughness={0.9} strokeWidth={1.3} seed={9} class="mh mh4" /></span>, my wife. I'm prouder of her than of anything
+          I've built — of who she is, and of the work she does at <a href="https://womenfirstfund.org/" rel="noopener">Women First</a>.
+          I keep telling her to put something on <a href="https://aditipadiyar.com" rel="noopener">aditipadiyar.com</a>;
+          maybe one day you'll find something there. She loves animals; we both read more than we
+          have any business doing<Doodle name="book" size={18} color="#e0a96a" seed={4} class="word-doodle" />; and we travel any chance we
+          get<Doodle name="aeroplane" size={20} color="#9aa7b3" seed={6} class="word-doodle" />. We share our home with two cats, <strong>Obi</strong> and
+          <strong>Zuzu</strong> — the soul of my life.</p>
         </div>
       </Place>
 
       {/* Cats — a pair on desktop, stacked on narrow screens */}
       <Place id="p-obi" saved={layout['p-obi']}
         x={700} y={1460} rotate={3} z={2} w={230}
-        tablet={{ x: 235, y: 2876, rotate: 3, w: 290 }}
-        mobile={{ x: 40, y: 3778, rotate: 3, w: 300 }}>
+        tablet={{ x: 235, y: 3063, rotate: 3, w: 290 }}
+        mobile={{ x: 40, y: 3926, rotate: 3, w: 300 }}>
         <Polaroid src="/images/obi.jpg" alt="Obi, our long-haired grey cat, asleep on a window hammock" caption="Obi" />
       </Place>
 
       <Place id="p-zuzu" saved={layout['p-zuzu']}
         x={946} y={1460} rotate={-3} z={2} w={220}
-        tablet={{ x: 235, y: 3306, rotate: -3, w: 290 }}
-        mobile={{ x: 40, y: 4221, rotate: -3, w: 300 }}>
+        tablet={{ x: 235, y: 3534, rotate: -3, w: 290 }}
+        mobile={{ x: 40, y: 4407, rotate: -3, w: 300 }}>
         <Polaroid src="/images/zuzu.jpg" alt="Zuzu, our tabby cat with a white belly, curled up grooming" caption="Zuzu" />
       </Place>
 
       <Place id="t-canada" saved={layout['t-canada']}
-        x={92} y={1721} rotate={-0.3} w={560}
-        tablet={{ x: 40, y: 3865, w: 600 }}
-        mobile={{ x: 20, y: 4797, w: 340 }}>
+        x={92} y={1766} rotate={-0.3} w={560}
+        tablet={{ x: 40, y: 4126, w: 600 }}
+        mobile={{ x: 20, y: 5013, w: 340 }}>
         <div class="scrap-text">
-          <p>I like it here. The only thing I really miss is 220&nbsp;V — microwaves felt more
-          powerful and hair dryers worked better.</p>
-          <p>More than anything, I like that the country isn't built on the back of the poor. You
-          could theoretically afford a great life in India because everything is so cheap — but
-          everything is cheap because it's stolen from the poor: construction, house help, drivers,
-          security guards, shops, all paid peanuts. The West doesn't come with those luxuries, but
-          I prefer the better distribution of wealth.</p>
-          <p>I walk a lot more here. The city makes it easy.</p>
+          <p>I like it here. The thing I miss most, absurdly, is 220&nbsp;volts — back home the
+          microwaves hit harder and the hair dryers actually meant business.</p>
+          <p>More than anything, I like that this country isn't built on the backs of the poor. You
+          could afford a beautiful life in India precisely because everything is cheap — and
+          everything is cheap because it is taken from people paid almost nothing: the men who pour
+          the concrete, the house help, the drivers, the guards, the shopkeepers. The West doesn't
+          come with those conveniences, and I'll take the trade. I'd rather live where the wealth is
+          shared more evenly.</p>
+          <p>I walk more here. The city makes it easy, and I've come to love it.</p>
         </div>
       </Place>
 
       {/* Antarctica — a pair */}
       <Place id="p-antarctica1" saved={layout['p-antarctica1']}
         x={700} y={2010} rotate={-2} z={2} w={280}
-        tablet={{ x: 230, y: 4222, rotate: -2, w: 300 }}
-        mobile={{ x: 30, y: 5358, rotate: -2, w: 320 }}>
+        tablet={{ x: 230, y: 4470, rotate: -2, w: 300 }}
+        mobile={{ x: 30, y: 5527, rotate: -2, w: 320 }}>
         <Polaroid src="/images/antarctica-1.jpg" alt="Aditi and Navid bundled up on a snowy slope in Antarctica" caption="Antarctica" />
       </Place>
 
       <Place id="p-antarctica2" saved={layout['p-antarctica2']}
         x={992} y={2010} rotate={3} z={2} w={280}
-        tablet={{ x: 230, y: 4501, rotate: 3, w: 300 }}
-        mobile={{ x: 30, y: 5652, rotate: 3, w: 320 }}>
+        tablet={{ x: 230, y: 4786, rotate: 3, w: 300 }}
+        mobile={{ x: 30, y: 5854, rotate: 3, w: 320 }}>
         <Polaroid src="/images/antarctica-2.jpg" alt="Two people play-fighting on the ice with an expedition ship and icebergs behind" caption="the end of the world" />
       </Place>
 
@@ -297,72 +315,94 @@ const personLd = {
       {/* ===== Act 2 — career ===== */}
       <Place id="t-career" saved={layout['t-career']}
         x={96} y={2186} rotate={-0.4} w={560}
-        tablet={{ x: 40, y: 4788, w: 600 }}
-        mobile={{ x: 20, y: 5954, w: 340 }}>
+        tablet={{ x: 40, y: 5107, w: 600 }}
+        mobile={{ x: 20, y: 6187, w: 340 }}>
         <div class="scrap-text">
-          <p>I've been a software engineer for 12 years. Like a lot of engineers, I started out
-          teaching myself, and I've taught myself most of what I know since. I'm proud of that.</p>
-          <p>I absolutely love building. There's probably nothing I enjoy more — and like a lot of
-          us right now, I'm suffering from a serious case of LLM psychosis. There's too much
-          possibility; I want to be building all the time. I'm burning tokens constantly.</p>
-          <p>One of my favorite ways to relax is to close my eyes and design the most obscure
-          machines I can — ones that could never actually be built.</p>
+          <p>I've been a software engineer for twelve years. Like a lot of us, I started by
+          teaching myself, and I've kept teaching myself most of what I know since. I'm proud of
+          that — the quiet pride of having drawn my own map.</p>
+          <p>There's almost nothing I love more than building. Right now I've got a bad case of
+          LLM psychosis: suddenly too much is possible, I want to build all of it at once, and I
+          burn through tokens like they're free.</p>
         </div>
       </Place>
 
       <Place id="t-bigdrop" saved={layout['t-bigdrop']}
         x={108} y={2560} rotate={0.4} w={560}
-        tablet={{ x: 40, y: 5117, w: 600 }}
-        mobile={{ x: 20, y: 6486, w: 340 }}>
+        tablet={{ x: 40, y: 5422, w: 600 }}
+        mobile={{ x: 20, y: 6673, w: 340 }}>
         <div class="scrap-text">
-          <p>I don't remember ever deciding to start a startup. I just wanted to build, and one
-          thing led to another. I was already building in university — at some point I was spending
-          way more time on my own code than on whatever I was supposed to be doing. I hated math by
-          then anyway.</p>
-          <p>So I dropped out of Noida Institute of Engineering and Technology (🤮) and started an
-          IT services firm in Gurgaon called <strong>Big Drop</strong>. It was
-          <a href="https://inc42.com/buzz/appworks-acquires-bigdrop/" rel="noopener">acquired</a>
-          a few years later.</p>
+          <p>I never really decided to start a company; I just wanted to build, and one thing led
+          to the next. I was already building in university, spending far more time on my own code
+          than on anything I was supposed to be doing. I'd come to hate math by then anyway.</p>
+          <p>So I dropped out of the Noida Institute of Engineering and Technology (🤮) and started
+          an IT services firm in Gurgaon called <strong>Big Drop</strong>. A few years later it was
+          <a href="https://inc42.com/buzz/appworks-acquires-bigdrop/" rel="noopener">acquired</a>.</p>
         </div>
+      </Place>
+
+      {/* Big Drop logo, pinned beside that paragraph */}
+      <Place id="logo-bigdrop" saved={layout['logo-bigdrop']}
+        x={688} y={2500} rotate={-4} z={3} w={150}
+        tablet={{ x: 600, y: 4145, rotate: -4, w: 120 }}
+        mobile={{ x: 235, y: 6486, rotate: -4, w: 110 }}>
+        <img class="logo-mark" src="/images/bigdrop-logo.png" alt="Big Drop logo" loading="lazy" />
       </Place>
 
       <Place id="p-niet" saved={layout['p-niet']}
         x={744} y={2600} rotate={-3} z={2} w={330}
-        tablet={{ x: 230, y: 5371, rotate: -3, w: 300 }}
-        mobile={{ x: 30, y: 6885, rotate: -3, w: 320 }}>
+        tablet={{ x: 230, y: 5692, rotate: -3, w: 300 }}
+        mobile={{ x: 30, y: 7084, rotate: -3, w: 320 }}>
         <Polaroid src="/images/niet.webp" alt="Aerial view of NIET campus" caption="NIET — the one I left 🤮" />
       </Place>
 
       <Place id="t-canary" saved={layout['t-canary']}
         x={92} y={2859} rotate={-0.3} w={560}
-        tablet={{ x: 40, y: 5563, w: 600 }}
-        mobile={{ x: 20, y: 7085, w: 340 }}>
+        tablet={{ x: 40, y: 5919, w: 600 }}
+        mobile={{ x: 20, y: 7316, w: 340 }}>
         <div class="scrap-text">
-          <p>After that I tried <strong>Square1</strong> — meant to be Shopify for India, before
-          Shopify itself got big there. It went through India Accelerator and the Global
-          Accelerator Network. It didn't make it.</p>
-          <p>These days I work at Canary Technologies, on software for hotels — I joined as the
-          sixth engineer and twenty-first employee. It's where I learned to be a serious software
-          engineer; most of the principles I hold close to heart now come from my time there.</p>
+          <p>After that came <strong>Square1</strong> — meant to be a Shopify for India, before
+          Shopify itself arrived and got big there. It went through India Accelerator and the Global
+          Accelerator Network, and it didn't make it. Not everything does.</p>
+          <p>These days I'm at Canary Technologies, building software for hotels. I joined as the
+          sixth engineer and the twenty-first employee. It's where I learned to be a serious
+          engineer; most of the principles I hold close came from my years there.</p>
         </div>
+      </Place>
+
+      {/* Square1 logo, pinned beside that paragraph */}
+      <Place id="logo-square1" saved={layout['logo-square1']}
+        x={684} y={2872} rotate={4} z={3} w={120}
+        tablet={{ x: 612, y: 5919, rotate: 4, w: 96 }}
+        mobile={{ x: 250, y: 7250, rotate: 4, w: 92 }}>
+        <img class="logo-mark" src="/images/square1-logo.png" alt="Square1 logo" loading="lazy" />
       </Place>
 
       <Place id="t-close" saved={layout['t-close']}
         x={104} y={3128} rotate={0.4} w={560}
-        tablet={{ x: 40, y: 5816, w: 600 }}
-        mobile={{ x: 20, y: 7455, w: 340 }}>
+        tablet={{ x: 40, y: 6188, w: 600 }}
+        mobile={{ x: 20, y: 7726, w: 340 }}>
         <div class="scrap-text">
-          <p>Like everyone else right now, I'm excited about what AI has unlocked, and I spend a
-          lot of time trying to figure out how to use it to reliably ship production code.</p>
-          <p>Software has unlocked a lot in my life. It's my greatest passion. When I'm exhausted
-          from work, I code.</p>
+          <p>I'm electrified by what AI has cracked open — it's most of what I think about now, and
+          I want to build so much more.</p>
+          <p>Software gave me this whole life; it's my greatest passion. I came from a small place, a
+          long way from here, and not many people make it out. I'm proud of the road, I'm happy, and
+          I'm nowhere near done.</p>
         </div>
       </Place>
 
+      {/* the dry closer, as a handwritten aside */}
+      <Place id="aside-code" saved={layout['aside-code']}
+        x={712} y={3150} rotate={-5} z={3} w={300}
+        tablet={{ x: 360, y: 6520, rotate: -5, w: 320 }}
+        mobile={{ x: 24, y: 8520, rotate: -4, w: 320 }}>
+        <p class="scrap-aside">When I'm tired from work, I code to relax.</p>
+      </Place>
+
       <Place id="email" saved={layout.email}
-        x={104} y={3339} rotate={-1} z={3} w={520}
-        tablet={{ x: 40, y: 6011, w: 600 }}
-        mobile={{ x: 20, y: 7709, w: 340 }}>
+        x={104} y={3349} rotate={-1} z={3} w={520}
+        tablet={{ x: 40, y: 6428, w: 600 }}
+        mobile={{ x: 20, y: 8078, w: 340 }}>
         <p class="scrap-email">Reach me at <EmailRotator client:load />.</p>
       </Place>
 
@@ -411,6 +451,41 @@ const personLd = {
     font-family: 'Caveat', var(--font-serif);
     font-size: 1.7rem;
     color: #fff;
+  }
+
+  /* little hand-drawn doodles tucked beside words */
+  .scrap-text :global(svg.word-doodle) {
+    display: inline-block !important;
+    width: auto;
+    height: 1.15em;
+    vertical-align: -0.22em;
+    margin: 0 2px;
+  }
+
+  /* the dry closing line, in cursive off to the side */
+  .scrap-aside {
+    font-family: 'Caveat', var(--font-serif);
+    font-size: 2rem;
+    line-height: 1.05;
+    color: var(--accent-color);
+  }
+
+  /* Square1 logo sticker */
+  .logo-mark {
+    display: block;
+    width: 100%;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  }
+
+  /* handwritten margin notes (e.g. the "(I think?)" annotation) */
+  .scrap-hand {
+    font-family: 'Caveat', var(--font-serif);
+    font-size: 1.35rem;
+    line-height: 1.05;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    display: inline-block;
   }
   /* tiny doodled hearts hugging Aditi's name */
   .scrap-text .aditi-name { position: relative; white-space: nowrap; }

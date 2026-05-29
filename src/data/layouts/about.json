@@ -1,0 +1,303 @@
+{
+  "t-coconut": {
+    "desktop": {
+      "x": 97,
+      "y": 266,
+      "rotate": 0.4
+    },
+    "tablet": {
+      "x": 52,
+      "y": 690,
+      "rotate": 0.4
+    }
+  },
+  "t-bus": {
+    "desktop": {
+      "x": 100,
+      "y": 686,
+      "rotate": -0.4
+    },
+    "tablet": {
+      "x": 54,
+      "y": 1048,
+      "rotate": -0.4
+    }
+  },
+  "t-bicycle": {
+    "desktop": {
+      "x": 101,
+      "y": 1070,
+      "rotate": 0.5
+    },
+    "tablet": {
+      "x": 54,
+      "y": 1333,
+      "rotate": 0.5
+    }
+  },
+  "t-move": {
+    "desktop": {
+      "x": 100,
+      "y": 1211,
+      "rotate": -0.4
+    },
+    "tablet": {
+      "x": 45,
+      "y": 2055,
+      "rotate": -0.4
+    }
+  },
+  "t-aditi": {
+    "desktop": {
+      "x": 100,
+      "y": 1438,
+      "rotate": 0.4
+    },
+    "tablet": {
+      "x": 47,
+      "y": 2292,
+      "rotate": 0.4
+    }
+  },
+  "t-canada": {
+    "desktop": {
+      "x": 95,
+      "y": 1668,
+      "rotate": -0.3
+    },
+    "tablet": {
+      "x": 54,
+      "y": 3101,
+      "rotate": -0.3
+    }
+  },
+  "divider": {
+    "desktop": {
+      "x": 98,
+      "y": 2053,
+      "rotate": 0
+    }
+  },
+  "t-career": {
+    "desktop": {
+      "x": 97,
+      "y": 2121,
+      "rotate": -0.4
+    },
+    "tablet": {
+      "x": 74,
+      "y": 3825,
+      "rotate": -0.4
+    }
+  },
+  "t-bigdrop": {
+    "desktop": {
+      "x": 98,
+      "y": 2474,
+      "rotate": 0.4
+    },
+    "tablet": {
+      "x": 68,
+      "y": 4145,
+      "rotate": 0.4
+    }
+  },
+  "p-niet": {
+    "desktop": {
+      "x": 715,
+      "y": 2352,
+      "rotate": -3
+    },
+    "tablet": {
+      "x": 58,
+      "y": 4415,
+      "rotate": -3
+    }
+  },
+  "t-canary": {
+    "desktop": {
+      "x": 95,
+      "y": 2720,
+      "rotate": -0.3
+    },
+    "tablet": {
+      "x": 68,
+      "y": 4662,
+      "rotate": -0.3
+    }
+  },
+  "t-close": {
+    "desktop": {
+      "x": 93,
+      "y": 2999,
+      "rotate": 0.4
+    },
+    "tablet": {
+      "x": 66,
+      "y": 4935,
+      "rotate": 0.4
+    }
+  },
+  "email": {
+    "desktop": {
+      "x": 96,
+      "y": 3205,
+      "rotate": -1
+    },
+    "tablet": {
+      "x": 62,
+      "y": 5206,
+      "rotate": -1
+    }
+  },
+  "map": {
+    "desktop": {
+      "x": 805,
+      "y": 460,
+      "rotate": 2
+    },
+    "tablet": {
+      "x": 379,
+      "y": 316,
+      "rotate": 2
+    }
+  },
+  "p-bridge": {
+    "desktop": {
+      "x": 1080,
+      "y": 898,
+      "rotate": -2
+    },
+    "tablet": {
+      "x": 206,
+      "y": 1730,
+      "rotate": -2
+    }
+  },
+  "p-tea": {
+    "desktop": {
+      "x": 902,
+      "y": 912,
+      "rotate": 2
+    },
+    "tablet": {
+      "x": 410,
+      "y": 1502,
+      "rotate": 2
+    }
+  },
+  "p-city": {
+    "desktop": {
+      "x": 717,
+      "y": 893,
+      "rotate": -3
+    },
+    "tablet": {
+      "x": 101,
+      "y": 1496,
+      "rotate": -3
+    }
+  },
+  "p-zuzu": {
+    "desktop": {
+      "x": 988,
+      "y": 1256,
+      "rotate": -3
+    },
+    "tablet": {
+      "x": 394,
+      "y": 2494,
+      "rotate": -3
+    }
+  },
+  "p-obi": {
+    "desktop": {
+      "x": 722,
+      "y": 1267,
+      "rotate": 3
+    },
+    "tablet": {
+      "x": 62,
+      "y": 2519,
+      "rotate": 3
+    }
+  },
+  "p-antarctica1": {
+    "desktop": {
+      "x": 697,
+      "y": 1836,
+      "rotate": -2
+    },
+    "tablet": {
+      "x": 61,
+      "y": 3460,
+      "rotate": -2
+    }
+  },
+  "p-antarctica2": {
+    "desktop": {
+      "x": 917,
+      "y": 1999,
+      "rotate": 3
+    },
+    "tablet": {
+      "x": 401,
+      "y": 3464,
+      "rotate": 3
+    }
+  },
+  "portrait": {
+    "tablet": {
+      "x": 69,
+      "y": 306,
+      "rotate": -3
+    },
+    "desktop": {
+      "x": 819,
+      "y": 85,
+      "rotate": -3
+    }
+  },
+  "aside-code": {
+    "desktop": {
+      "x": 820,
+      "y": 2986,
+      "rotate": -5
+    }
+  },
+  "aside-think": {
+    "desktop": {
+      "x": 440,
+      "y": 67,
+      "rotate": -18.2
+    }
+  },
+  "logo-square1": {
+    "desktop": {
+      "x": 937,
+      "y": 2660,
+      "rotate": 4
+    }
+  },
+  "think-arrow": {
+    "desktop": {
+      "x": 441,
+      "y": 81,
+      "rotate": 123
+    }
+  },
+  "think-text": {
+    "desktop": {
+      "x": 501,
+      "y": 48,
+      "rotate": -3
+    }
+  },
+  "logo-bigdrop": {
+    "desktop": {
+      "x": 764,
+      "y": 2696,
+      "rotate": -4
+    }
+  }
+}
