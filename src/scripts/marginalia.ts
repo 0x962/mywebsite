@@ -1,49 +1,20 @@
 /**
  * Marginalia controller.
  *
- * Authors place <Term>, <Note>, and <Footnote> components inline in MDX or
- * Astro prose. After page load this script restructures the DOM so each
- * note's anchor block (paragraph, list, etc.) and its note(s) sit side-by-side
- * in a `.note-row`. The note(s) live in a sticky `.note-stack` scoped to that
- * row, so they track the paragraph until it (plus its bottom margin) scrolls
- * out of view.
+ * Authors place <Term>, <Note>, and <Footnote> components inline. After page
+ * load this script hoists each margin-note to be a direct child of the
+ * article body and positions it absolutely in the right rail, vertically
+ * aligned with its anchor. When two anchors are too close together, the
+ * second note is pushed down so it starts after the first one ends — notes
+ * stack and never overlap. Content paragraphs stay in normal flow.
  */
 
-const BLOCK_TAGS = new Set([
-  'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
-  'UL', 'OL', 'PRE', 'BLOCKQUOTE', 'FIGURE', 'DIV', 'TABLE',
-]);
-const isBlockTag = (el: HTMLElement) => BLOCK_TAGS.has(el.tagName);
-
-/**
- * Walk back and forward from `seed` to collect every contiguous inline
- * sibling that doesn't cross a block boundary. Used to recover from MDX
- * leaving inline anchors un-paragraphed when a block component sits mid-prose.
- */
-function collectInlineRun(seed: HTMLElement, parent: HTMLElement): Node[] {
-  let start: Node = seed;
-  while (start.previousSibling) {
-    const prev = start.previousSibling;
-    if (prev.nodeType === 1 && isBlockTag(prev as HTMLElement)) break;
-    start = prev;
-  }
-  const out: Node[] = [];
-  let cur: Node | null = start;
-  while (cur) {
-    if (cur.nodeType === 1 && cur !== seed && isBlockTag(cur as HTMLElement)) break;
-    const next: Node | null = cur.nextSibling;
-    out.push(cur);
-    cur = next;
-    if (cur && cur.parentNode !== parent) break;
-  }
-  return out;
-}
+const GAP = 24;
 
 function init() {
   const articleBody = document.querySelector<HTMLElement>('[data-marginalia-root]');
   if (!articleBody) return;
 
-  // Pair each footnote ref with its two bodies (margin + inline) by DOM order.
   const refs = Array.from(articleBody.querySelectorAll<HTMLElement>('.footnote-ref'));
   const bodyQueue = Array.from(articleBody.querySelectorAll<HTMLElement>('.footnote-body'));
   refs.forEach((ref, i) => {
@@ -55,137 +26,109 @@ function init() {
     }
   });
 
-  // For each margin-note: pull it up to be a direct child of articleBody if
-  // MDX nested it, then find its anchor's top-level block and wrap them in a
-  // shared .note-row. Multiple notes anchored to the same block share a stack.
   const asides = Array.from(articleBody.querySelectorAll<HTMLElement>('aside.margin-note'));
   for (const aside of asides) {
-    while (aside.parentElement && aside.parentElement !== articleBody) {
-      const parent = aside.parentElement;
-      const grandparent = parent.parentElement;
-      if (!grandparent) break;
-      grandparent.insertBefore(aside, parent.nextSibling);
-    }
-
-    const id = aside.dataset.noteId ?? aside.dataset.fnId;
-    if (!id) continue;
-
-    let anchor: HTMLElement | null = null;
-    if (aside.dataset.fnId) {
-      anchor = articleBody.querySelector<HTMLElement>(`.footnote-ref[data-fn-id="${id}"]`);
-    } else {
-      anchor = articleBody.querySelector<HTMLElement>(`[data-term-id="${id}"]`);
-    }
-
-    // Climb to a top-level child of articleBody. If we land on an existing
-    // .note-row (because a previous note already wrapped this paragraph),
-    // peel back into the row's first child so we can reuse the row's stack.
-    let block: HTMLElement | null = anchor;
-    while (block && block.parentElement !== articleBody) block = block.parentElement;
-    if (block && block.classList.contains('note-row')) {
-      block = block.firstElementChild as HTMLElement | null;
-    }
-
-    if (!block) {
-      let prev = aside.previousElementSibling as HTMLElement | null;
-      while (prev && (prev.matches('aside') || prev.classList.contains('note-row'))) {
-        prev = prev.previousElementSibling as HTMLElement | null;
-      }
-      block = prev;
+    let block: HTMLElement | null = aside;
+    while (block && block.parentElement !== articleBody) {
+      block = block.parentElement;
     }
     if (!block) continue;
-
-    // Defensive: rebuild a synthetic <p> if the anchor is loose inline content.
-    if (!isBlockTag(block)) {
-      const synth = document.createElement('p');
-      const run = collectInlineRun(block, articleBody);
-      if (run.length === 0) continue;
-      articleBody.insertBefore(synth, run[0]!);
-      run.forEach((n) => synth.appendChild(n));
-      block = synth;
+    if (aside.parentElement !== articleBody) {
+      articleBody.insertBefore(aside, block.nextSibling);
     }
+  }
 
-    let row: HTMLElement;
-    let stack: HTMLElement;
-    const existingRow = block.parentElement;
-    if (existingRow && existingRow.classList.contains('note-row')) {
-      row = existingRow;
-      stack = row.querySelector<HTMLElement>('.note-stack')!;
-    } else {
-      row = document.createElement('div');
-      row.className = 'note-row';
-      block.parentElement!.insertBefore(row, block);
-      row.appendChild(block);
-      stack = document.createElement('div');
-      stack.className = 'note-stack';
-      row.appendChild(stack);
-    }
-    stack.appendChild(aside);
+  layout(articleBody);
+  attachHoverPairing(articleBody);
+
+  let scheduled = false;
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      layout(articleBody);
+    });
+  };
+  window.addEventListener('resize', schedule, { passive: true });
+
+  const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
+  if (fonts?.ready) fonts.ready.then(() => layout(articleBody));
+
+  const noteImages = articleBody.querySelectorAll<HTMLImageElement>('aside.margin-note img');
+  for (const img of Array.from(noteImages)) {
+    if (img.complete) continue;
+    img.addEventListener('load', schedule, { once: true });
+    img.addEventListener('error', schedule, { once: true });
   }
 }
 
-/**
- * Once rows are built, fade out each note-stack as soon as the *next* row
- * with a stack is approaching its sticky position — otherwise the previous
- * note's overflowing children visually clash with the new sticky note.
- * Also fades when the current row is fully past the viewport top.
- * Throttled to rAF.
- */
-function attachFade() {
-  const stacks = Array.from(document.querySelectorAll<HTMLElement>('.note-row > .note-stack'));
-  if (stacks.length === 0) return;
+function layout(articleBody: HTMLElement) {
+  articleBody.style.minHeight = '';
 
-  // Read CSS `--top-margin` from the document root so we don't drift if the
-  // value changes responsively.
-  const readTopMargin = () =>
-    parseInt(getComputedStyle(document.documentElement).getPropertyValue('--top-margin'), 10) || 88;
-  const HANDOFF = 40; // px before next sticks at which we begin fading the previous
+  const asides = Array.from(
+    articleBody.querySelectorAll<HTMLElement>(':scope > aside.margin-note')
+  );
+  if (asides.length === 0) return;
+  if (getComputedStyle(asides[0]!).display === 'none') return;
 
-  let scheduled = false;
-  const update = () => {
-    scheduled = false;
-    const topMargin = readTopMargin();
-    for (let i = 0; i < stacks.length; i++) {
-      const stack = stacks[i]!;
-      const row = stack.parentElement;
-      if (!row) continue;
-      const rect = row.getBoundingClientRect();
-      let past = false;
+  const bodyTop = articleBody.getBoundingClientRect().top + window.scrollY;
 
-      // Fade if any subsequent row is already sticky-eligible (its top is
-      // approaching the threshold). Use the *next* stacked row only — that's
-      // the one we'd hand off to.
-      const next = stacks[i + 1];
-      if (next) {
-        const nextRow = next.parentElement;
-        if (nextRow) {
-          const nextRect = nextRow.getBoundingClientRect();
-          if (nextRect.top < topMargin + HANDOFF) past = true;
-        }
-      }
+  let cursor = 0;
+  let lastBottom = 0;
+  for (const aside of asides) {
+    const id = aside.dataset.noteId ?? aside.dataset.fnId;
+    if (!id) continue;
+    const anchor = aside.dataset.fnId
+      ? articleBody.querySelector<HTMLElement>(`.footnote-ref[data-fn-id="${id}"]`)
+      : articleBody.querySelector<HTMLElement>(`[data-term-id="${id}"]`);
+    if (!anchor) continue;
 
-      // Always fade once this row is fully above viewport top.
-      if (rect.bottom < 0) past = true;
+    const anchorTop = anchor.getBoundingClientRect().top + window.scrollY - bodyTop;
+    const top = Math.max(anchorTop, cursor);
+    aside.style.top = `${top}px`;
+    const height = aside.offsetHeight;
+    cursor = top + height + GAP;
+    lastBottom = top + height;
+  }
 
-      stack.style.opacity = past ? '0' : '1';
-      stack.style.pointerEvents = past ? 'none' : '';
-    }
+  if (lastBottom > articleBody.offsetHeight) {
+    articleBody.style.minHeight = `${lastBottom}px`;
+  }
+}
+
+function attachHoverPairing(articleBody: HTMLElement) {
+  const findAside = (id: string) =>
+    articleBody.querySelector<HTMLElement>(
+      `:scope > aside.margin-note[data-note-id="${id}"], :scope > aside.margin-note[data-fn-id="${id}"]`
+    );
+
+  const linkPair = (a: HTMLElement, b: HTMLElement) => {
+    const on = () => { a.classList.add('is-active'); b.classList.add('is-active'); };
+    const off = () => { a.classList.remove('is-active'); b.classList.remove('is-active'); };
+    a.addEventListener('mouseenter', on);
+    a.addEventListener('mouseleave', off);
+    a.addEventListener('focusin', on);
+    a.addEventListener('focusout', off);
   };
 
-  const onScroll = () => {
-    if (scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(update);
-  };
+  for (const term of Array.from(articleBody.querySelectorAll<HTMLElement>('[data-term-id]'))) {
+    const aside = findAside(term.dataset.termId!);
+    if (!aside) continue;
+    linkPair(term, aside);
+    linkPair(aside, term);
+  }
 
-  update();
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll, { passive: true });
+  for (const ref of Array.from(articleBody.querySelectorAll<HTMLElement>('.footnote-ref[data-fn-id]'))) {
+    const aside = findAside(ref.dataset.fnId!);
+    if (!aside) continue;
+    linkPair(ref, aside);
+    linkPair(aside, ref);
+  }
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => { init(); attachFade(); });
+  document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
-  attachFade();
 }

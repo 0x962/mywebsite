@@ -1,0 +1,61 @@
+---
+import Layout from '../../components/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  // Slugs with a bespoke canvas page of their own — served by their dedicated
+  // .astro file instead of this generic renderer.
+  const CANVAS_PAGES = new Set(['browser-plugin-for-ui-design']);
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts
+    .filter((post) => !CANVAS_PAGES.has(post.id))
+    .map((post) => ({
+      params: { slug: post.id },
+      props: { post },
+    }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const postUrl =new URL(`/wip/${post.id}/`, Astro.site).toString();
+const blogPostingLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.summary,
+  datePublished: post.data.date.toISOString(),
+  author: {
+    '@type': 'Person',
+    name: 'Navid Khan',
+    url: 'https://nvdk.co/',
+  },
+  mainEntityOfPage: postUrl,
+  url: postUrl,
+  image: new URL('/og-default.png', Astro.site).toString(),
+};
+---
+<Layout
+  title={`${post.data.title} — Navid Khan`}
+  description={post.data.summary}
+  ogType="article"
+  publishedTime={post.data.date.toISOString()}
+  jsonLd={blogPostingLd}
+>
+  <div class="manuscript">
+    <aside class="gutter"></aside>
+
+    <main class="content">
+      <h1 class="article-title">{post.data.title}</h1>
+      <article class="article-body" data-marginalia-root>
+        <Content />
+        <div class="article-end" aria-hidden="true">§</div>
+      </article>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import '../../scripts/marginalia.ts';
+  import '../../scripts/annotations.ts';
+</script>

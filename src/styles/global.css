@@ -22,6 +22,17 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Visually hidden but available to screen readers / crawlers. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -32,6 +43,71 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+/* OPEN CANVAS WORKSPACE ----------------------------------------------------
+   A bounded, scroll-only design stage. <Canvas> emits per-breakpoint design
+   width/height vars; media queries below pick the active pair; the controller
+   (canvas.ts) sets --cv-scale + the flowed height. <Place> children carry
+   per-breakpoint position vars and are switched here in one place. */
+.canvas-page {
+  margin-top: calc(var(--topbar-height) + 16px);
+  margin-bottom: 80px;
+}
+
+.canvas {
+  position: relative;
+  width: 100%;
+  /* mobile defaults; overridden per breakpoint below */
+  --cv-dw: var(--cv-dw-m);
+  --cv-h: var(--cv-h-m);
+  --cv-scale: 1;
+}
+.canvas-stage {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--cv-dw) * 1px);
+  height: calc(var(--cv-h) * 1px);
+  transform: translateX(-50%) scale(var(--cv-scale));
+  transform-origin: top center;
+}
+
+.cv-place {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* mobile defaults */
+  --x: var(--x-m); --y: var(--y-m); --rot: var(--rot-m); --z: var(--z-m); --w: var(--w-m);
+  width: var(--w);
+  z-index: var(--z);
+  transform: translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), 0) rotate(calc(var(--rot) * 1deg));
+  transform-origin: center center;
+}
+
+@media (min-width: 640px) {
+  .canvas { --cv-dw: var(--cv-dw-t); --cv-h: var(--cv-h-t); }
+  .cv-place { --x: var(--x-t); --y: var(--y-t); --rot: var(--rot-t); --z: var(--z-t); --w: var(--w-t); }
+}
+@media (min-width: 1024px) {
+  .canvas { --cv-dw: var(--cv-dw-d); --cv-h: var(--cv-h-d); }
+  .cv-place { --x: var(--x-d); --y: var(--y-d); --rot: var(--rot-d); --z: var(--z-d); --w: var(--w-d); }
+}
+
+.cv-scribble {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Per-breakpoint visibility for placed items (e.g. decoration that only makes
+   sense in the wider arrangements). */
+@media (max-width: 639px) {
+  .cv-hide-mobile { display: none !important; }
+}
+@media (max-width: 1023px) {
+  .cv-desktop-only { display: none !important; }
 }
 
 a { color: inherit; }
@@ -74,6 +150,21 @@ a { color: inherit; }
   content: '·';
   color: var(--accent-color);
   margin-right: 6px;
+}
+
+/* Handwritten "(wip)" annotation tucked in right after the wordmark. */
+.wordmark-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.wordmark-wip {
+  font-family: 'Caveat', 'IBM Plex Serif', Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--accent-color);
+  transform: rotate(-4deg);
+  transform-origin: left bottom;
 }
 
 .topbar-nav {
@@ -124,43 +215,36 @@ a { color: inherit; }
   max-width: calc(var(--content-width) + 40px + var(--marginalia-width));
 }
 
-/* NOTE ROW — paragraph + sticky sidenote stack.
-   Grid layout with stack in col 3 sized to height:0 so the row's height is
-   determined ONLY by the paragraph (col 1). The stack's children render via
-   overflow:visible. position:sticky on the stack makes it pin to top while
-   the paragraph is in view; when the paragraph (and thus the row) ends, the
-   sticky element gets pushed up by the row's bottom edge and scrolls out
-   with the paragraph. Built client-side by marginalia.ts. */
-.note-row {
-  display: grid;
-  grid-template-columns: minmax(0, var(--content-width)) 40px var(--marginalia-width);
-  align-items: start;
-  margin-bottom: 24px;
+/* MARGIN NOTES — positioned absolutely in the right rail. Content paragraphs
+   stay in normal flow; marginalia.ts hoists each <aside.margin-note> to be a
+   direct child of the article body and sets `top` based on its anchor's Y,
+   pushing later notes down whenever they would overlap a previous one. So
+   notes stack vertically without ever bumping content out of place. */
+.about-body,
+.article-body {
+  position: relative;
 }
-.note-row > :first-child {
-  grid-column: 1;
-  max-width: var(--content-width);
-  margin-bottom: 0;
-}
-.note-stack {
-  grid-column: 3;
-  position: sticky;
-  top: var(--top-margin);
-  height: 0;
-  overflow: visible;
-}
-.note-stack > aside.margin-note {
+
+aside.margin-note {
   display: block;
+  position: absolute;
+  left: calc(var(--content-width) + 40px);
+  top: -9999px;
   width: var(--marginalia-width);
-  margin: 0 0 24px 0;
   padding-left: 16px;
   border-left: 2px solid var(--accent-color);
   font-family: var(--font-sans);
   font-size: 0.8rem;
   line-height: 1.55;
   color: var(--text-primary);
+  transition: border-left-color 0.15s, color 0.15s;
 }
-.note-stack img.note-map {
+aside.margin-note.is-active {
+  border-left-color: #fff;
+  color: #fff;
+}
+
+aside.margin-note img.note-map {
   display: block;
   width: 100%;
   margin: 0 0 12px 0;
@@ -168,24 +252,17 @@ a { color: inherit; }
   border: 1px solid var(--border-color-strong);
   background: var(--code-bg);
 }
-.note-stack > aside.margin-note:last-child { margin-bottom: 0; }
-.note-stack > aside.margin-note p,
+
+aside.margin-note p,
 .inline-footnote p {
   margin: 0 0 10px 0;
 }
-.note-stack > aside.margin-note p:last-child,
+aside.margin-note p:last-child,
 .inline-footnote p:last-child {
   margin-bottom: 0;
 }
 
-/* Fade-out applied by marginalia.ts when next row approaches sticky */
-.note-stack {
-  transition: opacity 0.18s ease;
-}
-
-/* Subtle, offset link underline inside notes (default browser underline is
-   too dark and too close to the descenders) */
-.note-stack a,
+aside.margin-note a,
 .inline-footnote a {
   color: inherit;
   text-decoration: underline;
@@ -194,7 +271,7 @@ a { color: inherit; }
   text-decoration-thickness: 1px;
   transition: text-decoration-color 0.2s;
 }
-.note-stack a:hover,
+aside.margin-note a:hover,
 .inline-footnote a:hover {
   text-decoration-color: var(--accent-color);
 }
@@ -229,7 +306,7 @@ h1.article-title {
 }
 
 .article-body > * { max-width: var(--content-width); }
-.article-body > .note-row { max-width: 100%; }
+.article-body > aside.margin-note { max-width: var(--marginalia-width); }
 
 .article-body p { margin-bottom: 24px; }
 
@@ -250,11 +327,16 @@ h1.article-title {
 
 .article-body a {
   color: var(--text-primary);
-  border-bottom: 1px solid var(--accent-color);
+  border-bottom: 0;
   text-decoration: none;
   transition: background 0.2s;
 }
-.article-body a:hover { background: rgba(59, 130, 246, 0.1); }
+/* Fallback underline that's visible before annotations.ts runs (or if JS is
+   off). annotations.ts removes it once the rough-notation underline draws. */
+.article-body a:not([data-rough-underlined]) {
+  border-bottom: 1px solid var(--accent-color);
+}
+.article-body a:hover { background: rgba(59, 130, 246, 0.08); }
 
 .article-body blockquote {
   border-left: 2px solid var(--border-color-strong);
@@ -301,14 +383,10 @@ h1.article-title {
   margin: 48px 0;
 }
 
-/* MARGIN NOTE base styling — hidden until promoted into a .note-row by JS.
-   The label inside is shared with footnote-marker semantics. */
-.margin-note { display: none; }
-
 .margin-label {
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   display: block;
   margin-bottom: 8px;
   color: var(--accent-color);
@@ -333,11 +411,17 @@ h1.article-title {
 }
 .inline-footnote .margin-label { margin-bottom: 6px; }
 
-/* CONTEXT TERMS — static dashed underline; no hover state */
+/* CONTEXT TERMS — dashed underline; brightens when its note is paired */
 .context-term {
   border-bottom: 1px dashed var(--accent-color);
   color: var(--text-primary);
   padding: 0 2px;
+  cursor: help;
+  transition: background-color 0.15s, border-bottom-color 0.15s;
+}
+.context-term.is-active {
+  background: rgba(59, 130, 246, 0.12);
+  border-bottom-color: #fff;
 }
 
 /* CROSSHAIR CURSOR */
@@ -379,7 +463,7 @@ h1.article-title {
 .footnote-body .footnote-marker {
   font-family: var(--font-mono);
   font-style: normal;
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   font-weight: 700;
   color: var(--accent-color);
   display: block;
@@ -397,26 +481,7 @@ h1.article-title {
 }
 .image-wrap img {
   display: block;
-  filter: brightness(0.55) saturate(0.55) contrast(0.92);
-  transition: filter 0.5s ease;
-}
-.image-wrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  opacity: 0.75;
-  transition: opacity 0.5s ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.85'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  border-radius: 2px;
-}
-.image-wrap:hover img {
-  filter: brightness(1) saturate(1) contrast(1);
-}
-.image-wrap:hover::after {
-  opacity: 0;
+  filter: none;
 }
 
 /* SECTION BREAK — subtle three-dot rule between memoir sections */
@@ -454,13 +519,6 @@ h1.article-title {
   display: block;
   text-decoration: none;
   color: inherit;
-  border-left: 2px solid transparent;
-  padding-left: 0;
-  transition: border-left-color 0.2s, padding-left 0.2s;
-}
-.archive-item:hover {
-  border-left-color: var(--accent-color);
-  padding-left: 16px;
 }
 .archive-item:hover .archive-title { color: var(--accent-color); }
 
@@ -529,10 +587,103 @@ h1.article-title {
   font-size: 1.1rem;
   line-height: 1.75;
   color: var(--text-primary);
-  text-align: justify;
-  hyphens: auto;
+  text-align: left;
+  hyphens: none;
+  /* Slightly wider than the default 700px content width — feels right for
+     the memoir tone of this page. */
+  --about-text-width: 760px;
 }
-.about-body p { margin-bottom: 24px; max-width: var(--content-width); }
+.about-body p { margin-bottom: 24px; max-width: var(--about-text-width); }
+
+/* Small portrait at the top-left of the page. Block-level — the intro
+   paragraph starts below it, not wrapped around it. */
+.about-body .bio-intro {
+  margin: 0 0 20px;
+  width: 210px;
+}
+.about-body .bio-intro .image-wrap { width: 210px; }
+.about-body .bio-intro img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid var(--border-color-strong);
+  background: var(--code-bg);
+}
+
+/* Photo captions sit to the RIGHT of each image, in tiny mono type — see the
+   unified figure-layout block further down (".about-body figure"). */
+
+/* All marginalia rendered inline on the about page — the right rail stays
+   empty. We hide the hoisted .margin-note and surface the .inline-footnote
+   variant always (not just at narrow viewports). */
+.about-body aside.margin-note { display: none !important; }
+.about-body .inline-footnote {
+  display: block;
+  font-family: inherit;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 20px 0 36px;
+  max-width: var(--about-text-width);
+  text-align: left;
+}
+/* Label is redundant inline (the Term is right above the note) — hide it. */
+.about-body .inline-footnote .margin-label { display: none; }
+.about-body .inline-footnote .note-figure {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.about-body .inline-footnote img.note-map {
+  display: block;
+  width: 100%;
+  max-width: 160px;
+  margin: 0;
+  flex: 0 1 160px;
+  border: 1px solid var(--border-color-strong);
+  border-radius: 2px;
+  background: var(--code-bg);
+}
+.about-body .inline-footnote .note-figure figcaption {
+  flex: 0 0 88px;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.about-body .inline-footnote p {
+  margin-bottom: 10px;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+.about-body .inline-footnote p:last-child { margin-bottom: 0; }
+.about-body .inline-footnote a {
+  color: inherit;
+  border-bottom: 1px solid currentColor;
+  text-decoration: none;
+}
+.about-body .inline-footnote a:hover { background: rgba(255, 255, 255, 0.06); }
+
+/* Widen the bio-figures (memoir photos) to match the widened prose column. */
+.about-body .bio-figure,
+.about-body .bio-figure-vignette,
+.about-body .bio-figure-trio,
+.about-body .bio-figure-duo,
+.about-body .bio-figure-portrait {
+  max-width: var(--about-text-width);
+}
+.about-body .bio-figure-vignette .image-wrap { max-width: 540px; }
+.about-body .bio-figure-portrait .image-wrap { max-width: 320px; }
 .about-body .muted { color: var(--text-muted); font-size: 0.92em; }
 .about-body strong { color: var(--text-primary); font-weight: 600; }
 .about-body .claude-answer {
@@ -557,21 +708,21 @@ h1.article-title {
 }
 .bio-figure figcaption {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   color: var(--text-muted);
   margin-top: 8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-/* Portrait vignette — smaller image, centered within the prose column */
+/* Portrait vignette — smaller image, left-aligned within the prose column */
 .bio-figure-vignette {
   margin: 32px 0 40px;
   max-width: var(--content-width);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
 }
 .bio-figure-vignette .image-wrap { width: 100%; max-width: 420px; }
 .bio-figure-vignette img {
@@ -583,12 +734,14 @@ h1.article-title {
 }
 .bio-figure-vignette figcaption {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   color: var(--text-muted);
   margin-top: 8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.bio-figure-portrait { margin: 8px 0 32px; }
+.bio-figure-portrait .image-wrap { max-width: 260px; }
 .bio-figure-trio {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -609,7 +762,33 @@ h1.article-title {
 }
 .bio-figure-trio figcaption {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.54rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bio-figure-duo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 32px 0 40px;
+  max-width: var(--content-width);
+}
+.bio-figure-duo figure { margin: 0; }
+.bio-figure-duo .image-wrap { width: 100%; }
+.bio-figure-duo img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid var(--border-color-strong);
+  background: var(--code-bg);
+}
+.bio-figure-duo figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
   color: var(--text-muted);
   margin-top: 8px;
   letter-spacing: 0.08em;
@@ -617,7 +796,31 @@ h1.article-title {
 }
 @media (max-width: 700px) {
   .bio-figure-trio { grid-template-columns: 1fr; }
+  .bio-figure-duo { grid-template-columns: 1fr; }
 }
+
+/* CAPTIONS TO THE RIGHT — every about-page figure becomes a row: image on the
+   left, caption in a tiny fixed-width column on its right. Placed after the
+   per-type rules so font-size / margin / display win on source order. The
+   per-type rules still supply the mono / uppercase / muted styling. */
+.about-body figure {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 12px;
+}
+.about-body figure .image-wrap { flex: 1 1 auto; min-width: 0; }
+.about-body figcaption {
+  display: block;
+  flex: 0 0 88px;
+  margin-top: 0;
+  font-size: 0.5rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+/* Narrower captions inside the multi-column grids so the images keep room. */
+.about-body .bio-figure-duo figcaption { flex-basis: 72px; }
+.about-body .bio-figure-trio figcaption { flex-basis: 56px; }
 
 /* EMAIL ROTATOR — plain inline text, no chrome; the word fades + swaps */
 .email-rotator {
@@ -668,11 +871,7 @@ h1.article-title {
     align-items: baseline;
   }
   .topbar-inner { padding: 0 24px; }
-  .note-row {
-    display: block;
-    grid-template-columns: none;
-  }
-  .note-stack { display: none; }
+  aside.margin-note { display: none; }
   .inline-footnote { display: block; }
 }
 

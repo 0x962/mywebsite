@@ -1,0 +1,281 @@
+---
+/**
+ * Doodle — little hand-drawn line-art doodles, rendered to static inline SVG at
+ * build time via roughjs (sketchy, deterministic, crawlable, zero client JS).
+ * Each doodle is authored as SVG subpaths in its own viewBox; `stroke` paths are
+ * outlined, `fill` paths are solid-filled. Colour comes from the `color` prop
+ * (emitted as currentColor). Position/rotate with a wrapping <Place>.
+ */
+import rough from 'roughjs/bundled/rough.esm.js';
+
+// cx,cy,r → a small circle path (used for eyes, pips, spots).
+const dot = (cx: number, cy: number, r: number) =>
+  `M${cx} ${cy} m${-r} 0 a${r} ${r} 0 1 0 ${r * 2} 0 a${r} ${r} 0 1 0 ${-r * 2} 0`;
+
+interface Doodle {
+  w: number;
+  h: number;
+  stroke?: string[];
+  fill?: string[];
+}
+
+const DOODLES: Record<string, Doodle> = {
+  love: {
+    w: 100, h: 92,
+    fill: ['M50 86 C22 64 10 46 10 30 C10 16 22 9 33 13 C41 16 50 28 50 28 C50 28 59 16 67 13 C78 9 90 16 90 30 C90 46 78 64 50 86 Z'],
+  },
+  mountains: {
+    w: 120, h: 84,
+    stroke: ['M6 78 L40 22 L60 50 L82 16 L116 78', 'M30 36 L40 22 L50 35', 'M74 30 L82 16 L92 32', 'M2 78 L118 78'],
+  },
+  house: {
+    w: 100, h: 100,
+    stroke: ['M20 50 L20 92 L80 92 L80 50', 'M10 54 L50 18 L90 54', 'M44 92 L44 66 L62 66 L62 92', 'M28 60 L40 60 L40 72 L28 72 Z'],
+  },
+  forest: {
+    w: 130, h: 100,
+    stroke: [
+      'M34 16 L18 50 L28 50 L14 76 L54 76 L40 50 L50 50 Z', 'M30 76 L30 90 L38 90 L38 76',
+      'M92 28 L80 54 L88 54 L76 78 L108 78 L96 54 L104 54 Z', 'M88 78 L88 90 L96 90 L96 78',
+    ],
+  },
+  pyramids: {
+    w: 120, h: 90,
+    stroke: ['M8 80 L40 26 L72 80 Z', 'M58 80 L86 36 L112 80 Z', 'M2 80 L118 80', dot(100, 18, 8)],
+  },
+  aeroplane: {
+    w: 120, h: 80,
+    stroke: ['M12 44 L74 38 C90 36 100 42 100 44 C100 46 90 50 74 50 L22 52 Z', 'M44 46 L58 68 L68 68 L60 46', 'M18 44 L8 30 L16 32 L26 44'],
+  },
+  snake: {
+    w: 122, h: 70,
+    stroke: ['M8 50 C26 24 44 70 62 48 C74 33 90 44 98 50', 'M98 50 C108 46 110 60 100 60 C95 60 95 52 98 50 Z', 'M110 54 L121 50', 'M110 58 L121 62'],
+    fill: [dot(101, 51, 1.4)],
+  },
+  food: {
+    w: 100, h: 84,
+    stroke: ['M14 44 C14 22 86 22 86 44 Z', 'M12 50 L88 50', 'M12 56 C24 62 36 50 48 58 C60 66 72 52 88 58', 'M16 62 C16 78 84 78 84 62'],
+  },
+  dice: {
+    w: 80, h: 80,
+    stroke: ['M16 16 L64 16 L64 64 L16 64 Z'],
+    fill: [dot(28, 28, 3), dot(52, 28, 3), dot(40, 40, 3), dot(28, 52, 3), dot(52, 52, 3)],
+  },
+  cat: {
+    w: 100, h: 92,
+    stroke: [
+      'M26 30 L18 6 L44 24', 'M74 30 L82 6 L56 24', 'M20 42 C20 80 80 80 80 42', 'M20 42 C20 26 80 26 80 42',
+      'M34 56 L10 50', 'M34 60 L10 64', 'M66 56 L90 50', 'M66 60 L90 64', 'M47 58 L53 58 L50 63 Z',
+    ],
+    fill: [dot(38, 48, 2.5), dot(62, 48, 2.5)],
+  },
+  penguin: {
+    w: 76, h: 100,
+    stroke: [
+      'M38 8 C16 8 16 50 20 70 C24 92 52 92 56 70 C60 50 60 8 38 8 Z',
+      'M38 26 C27 26 26 54 30 70 C33 84 43 84 46 70 C50 54 49 26 38 26 Z',
+      'M34 30 L24 34 L34 38 Z', 'M30 90 L23 97 L36 95', 'M46 90 L53 97 L40 95',
+    ],
+    fill: [dot(32, 28, 2), dot(44, 28, 2)],
+  },
+  giraffe: {
+    w: 92, h: 120,
+    stroke: [
+      'M58 24 L48 70', 'M76 22 L64 70', 'M58 22 L78 12 L84 20 L70 26 Z', 'M62 12 L60 2', 'M76 12 L78 2',
+      'M40 70 L86 70 L82 94 L44 94 Z', 'M48 94 L46 116', 'M60 94 L60 116', 'M72 94 L74 116', 'M82 94 L84 116',
+      'M44 74 L36 98', 'M58 18 L50 16',
+    ],
+    fill: [dot(54, 80, 3), dot(67, 84, 3), dot(76, 77, 3)],
+  },
+  'india-gate': {
+    w: 100, h: 110,
+    stroke: [
+      'M16 100 L16 42 C16 18 84 18 84 42 L84 100', 'M34 100 L34 58 C34 40 66 40 66 58 L66 100',
+      'M8 100 L92 100', 'M12 42 L88 42', 'M12 36 L88 36', 'M40 36 L40 22 L60 22 L60 36',
+    ],
+  },
+  snowboard: {
+    w: 110, h: 100,
+    stroke: [
+      'M4 92 L106 66', 'M28 80 C28 73 72 62 88 58 C94 56 94 64 88 66 L34 86 C28 88 28 84 28 80 Z',
+      'M58 40 L52 60', 'M58 40 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0', 'M44 46 L70 44', 'M52 60 L44 74', 'M52 60 L60 70',
+    ],
+  },
+  star: {
+    w: 100, h: 96,
+    stroke: ['M50 6 L61 38 L95 38 L67 58 L78 92 L50 72 L22 92 L33 58 L5 38 L39 38 Z'],
+  },
+  sun: {
+    w: 100, h: 100,
+    stroke: [dot(50, 50, 18), 'M50 4 L50 18', 'M50 82 L50 96', 'M4 50 L18 50', 'M82 50 L96 50', 'M17 17 L27 27', 'M73 73 L83 83', 'M83 17 L73 27', 'M27 73 L17 83'],
+  },
+  cloud: {
+    w: 120, h: 72,
+    stroke: ['M24 58 C6 58 6 34 26 34 C28 16 56 16 60 32 C68 18 96 22 94 40 C110 40 110 58 94 58 Z'],
+  },
+  moon: {
+    w: 80, h: 92,
+    stroke: ['M58 10 C30 12 18 44 32 68 C42 84 66 86 74 72 C54 82 38 62 40 40 C42 24 50 14 58 10 Z'],
+    fill: [dot(64, 24, 2)],
+  },
+  flower: {
+    w: 90, h: 98,
+    stroke: [dot(45, 22, 12), dot(68, 40, 12), dot(58, 68, 12), dot(32, 68, 12), dot(22, 40, 12), 'M45 70 L45 96', 'M45 86 C56 82 62 90 50 94'],
+    fill: [dot(45, 45, 8)],
+  },
+  coffee: {
+    w: 92, h: 92,
+    stroke: ['M18 38 L24 80 L66 80 L72 38 Z', 'M13 38 L77 38', 'M72 46 C90 46 90 68 72 66', 'M34 10 C40 18 30 24 36 32', 'M52 10 C58 18 48 24 54 32'],
+  },
+  music: {
+    w: 72, h: 100,
+    stroke: ['M38 78 L38 14', 'M38 14 C58 18 60 36 50 46'],
+    fill: ['M26 80 m-13 0 a13 9 0 1 0 26 0 a13 9 0 1 0 -26 0'],
+  },
+  bolt: {
+    w: 58, h: 100,
+    fill: ['M34 6 L12 56 L30 56 L24 96 L48 42 L30 42 Z'],
+  },
+  balloon: {
+    w: 70, h: 100,
+    stroke: ['M35 6 C12 6 12 46 35 58 C58 46 58 6 35 6 Z', 'M31 58 L35 64 L39 58', 'M35 64 C43 78 27 86 35 98'],
+  },
+  fish: {
+    w: 112, h: 70,
+    stroke: ['M14 36 C30 14 70 14 86 36 C70 58 30 58 14 36 Z', 'M86 36 L106 20 L101 36 L106 52 Z'],
+    fill: [dot(34, 30, 2.5)],
+  },
+  sailboat: {
+    w: 100, h: 100,
+    stroke: ['M16 72 L84 72 L74 86 L26 86 Z', 'M50 14 L50 70', 'M50 16 L50 66 L18 66 Z', 'M54 24 L54 66 L80 66 Z', 'M6 92 C20 86 30 98 44 92 C58 86 70 98 94 92'],
+  },
+  cactus: {
+    w: 72, h: 100,
+    stroke: ['M30 92 L30 40 C30 28 42 28 42 40 L42 92', 'M30 56 C18 56 16 44 18 34 L24 34 C24 44 28 50 30 50', 'M42 50 C54 50 56 38 54 28 L48 28 C48 38 44 44 42 46', 'M22 92 L50 92 L46 100 L26 100 Z'],
+  },
+  icecream: {
+    w: 68, h: 100,
+    stroke: ['M24 52 L34 96 L44 52 Z', 'M21 52 C21 34 47 34 47 52 Z', 'M27 40 C27 26 41 26 41 40'],
+  },
+  diamond: {
+    w: 92, h: 82,
+    stroke: ['M18 30 L34 12 L58 12 L74 30 L46 74 Z', 'M18 30 L74 30', 'M34 12 L46 30 L58 12', 'M46 30 L46 74'],
+  },
+
+  // ---- Places we've been ----
+  'maple-leaf': { // Canada
+    w: 90, h: 96,
+    stroke: ['M45 6 L50 28 L66 20 L60 40 L84 38 L70 52 L88 64 L62 64 L66 86 L45 72 L24 86 L28 64 L2 64 L20 52 L6 38 L30 40 L24 20 L40 28 Z', 'M45 72 L45 93'],
+  },
+  'telephone-box': { // UK
+    w: 64, h: 100,
+    stroke: ['M12 18 L52 18 L52 96 L12 96 Z', 'M10 18 L54 18 L52 8 L14 8 Z', 'M18 26 L46 26 L46 60 L18 60 Z', 'M22 30 L22 56', 'M32 30 L32 56', 'M42 30 L42 56', 'M18 64 L46 64'],
+  },
+  shamrock: { // Ireland
+    w: 90, h: 100,
+    stroke: [dot(32, 40, 15), dot(58, 40, 15), dot(45, 62, 15), 'M45 72 L48 97', 'M47 84 C58 82 62 90 50 93'],
+    fill: [dot(45, 50, 3)],
+  },
+  nessie: { // Scotland
+    w: 120, h: 80,
+    stroke: ['M6 66 C14 50 26 50 34 66', 'M38 66 C46 52 58 52 66 66', 'M70 66 C78 54 86 54 90 66 C90 40 112 36 110 56 C109 64 100 66 96 64', 'M2 72 L118 72'],
+    fill: [dot(104, 48, 2)],
+  },
+  elephant: { // Thailand
+    w: 110, h: 90,
+    stroke: ['M34 36 C34 22 78 20 84 38 C92 40 96 48 96 60 L96 80 L82 80 L82 64 L52 64 L52 80 L38 80 L38 48', 'M38 48 C26 50 22 68 30 82', 'M30 82 C26 72 30 58 40 56', 'M60 34 C76 30 80 50 64 52'],
+    fill: [dot(42, 42, 2.5)],
+  },
+  palm: { // Maldives
+    w: 100, h: 100,
+    stroke: ['M50 93 C45 69 50 49 57 39', 'M57 39 C40 31 24 35 16 47', 'M57 39 C42 21 24 21 14 29', 'M57 39 C72 29 88 33 96 45', 'M57 39 C72 21 88 23 98 33', 'M18 94 C40 88 62 88 86 94'],
+    fill: [dot(52, 39, 3)],
+  },
+  'prayer-flags': { // Bhutan
+    w: 120, h: 70,
+    stroke: ['M6 14 C40 34 80 34 114 14', 'M16 22 L26 22 L21 36 Z', 'M34 28 L44 28 L39 42 Z', 'M52 31 L62 31 L57 45 Z', 'M70 31 L80 31 L75 45 Z', 'M88 28 L98 28 L93 42 Z'],
+  },
+
+  // ---- Animals (Aditi) ----
+  paw: {
+    w: 90, h: 90,
+    fill: ['M30 58 C30 46 60 46 60 58 C60 74 50 82 45 82 C40 82 30 74 30 58 Z', dot(26, 44, 7), dot(38, 34, 7), dot(52, 34, 7), dot(64, 44, 7)],
+  },
+  butterfly: {
+    w: 100, h: 90,
+    stroke: ['M50 22 L50 70', 'M50 24 C44 14 38 14 36 18', 'M50 24 C56 14 62 14 64 18', 'M50 32 C30 12 8 22 16 42 C22 54 44 50 50 40', 'M50 32 C70 12 92 22 84 42 C78 54 56 50 50 40', 'M50 44 C36 46 22 58 30 72 C36 80 48 66 50 54', 'M50 44 C64 46 78 58 70 72 C64 80 52 66 50 54'],
+  },
+
+  // ---- Technology (Navid) ----
+  robot: {
+    w: 80, h: 96,
+    stroke: ['M22 24 L58 24 L58 52 L22 52 Z', 'M40 24 L40 12', 'M32 46 L48 46', 'M26 56 L54 56 L54 86 L26 86 Z', 'M26 62 L14 62 L14 78', 'M54 62 L66 62 L66 78', 'M34 86 L34 94', 'M46 86 L46 94'],
+    fill: [dot(40, 9, 3), dot(32, 38, 3.5), dot(48, 38, 3.5)],
+  },
+  laptop: {
+    w: 110, h: 80,
+    stroke: ['M24 14 L86 14 L86 56 L24 56 Z', 'M30 20 L80 20 L80 50 L30 50 Z', 'M14 56 L96 56 L104 72 L6 72 Z', 'M48 64 L62 64'],
+  },
+
+  // ---- Reading / books ----
+  book: {
+    w: 110, h: 80,
+    stroke: ['M55 18 C40 10 20 10 8 16 L8 70 C20 64 40 64 55 72 C70 64 90 64 102 70 L102 16 C90 10 70 10 55 18 Z', 'M55 18 L55 72', 'M16 28 L46 24', 'M16 40 L46 36', 'M64 24 L94 28', 'M64 36 L94 40'],
+  },
+  books: {
+    w: 90, h: 90,
+    stroke: ['M16 30 L74 30 L74 44 L16 44 Z', 'M20 46 L78 46 L78 60 L20 60 Z', 'M14 62 L72 62 L72 78 L14 78 Z', 'M22 34 L22 40', 'M26 50 L26 56', 'M20 66 L20 72'],
+  },
+};
+
+interface Props {
+  name: keyof typeof DOODLES;
+  /** Rendered height in design-px (width follows the doodle's aspect). */
+  size?: number;
+  color?: string;
+  seed?: number;
+  strokeWidth?: number;
+  class?: string;
+}
+
+const { name, size = 80, color = 'var(--text-secondary)', seed = 1, strokeWidth = 2, class: className } = Astro.props;
+const d = DOODLES[name];
+
+const gen = rough.generator();
+const strokePaths = (d.stroke ?? []).flatMap((pd) =>
+  gen.toPaths(gen.path(pd, { seed, roughness: 1.1, strokeWidth, stroke: '#000' })),
+);
+const fillPaths = (d.fill ?? []).flatMap((pd) =>
+  gen.toPaths(gen.path(pd, { seed, roughness: 0.9, strokeWidth: 0.8, stroke: '#000', fill: '#000', fillStyle: 'solid' })),
+);
+const paths = [...fillPaths, ...strokePaths];
+
+const h = size;
+const w = Math.round((size * d.w) / d.h);
+const colorOf = (v: string | undefined) => (v && v !== 'none' ? 'currentColor' : 'none');
+---
+<svg
+  class:list={['cv-doodle', className]}
+  width={w}
+  height={h}
+  viewBox={`0 0 ${d.w} ${d.h}`}
+  fill="none"
+  style={`color:${color}`}
+  aria-hidden="true"
+  role="presentation"
+>
+  {paths.map((p) => (
+    <path
+      d={p.d}
+      stroke={colorOf(p.stroke)}
+      stroke-width={p.strokeWidth}
+      fill={colorOf(p.fill)}
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  ))}
+</svg>
+
+<style>
+  .cv-doodle { display: block; overflow: visible; pointer-events: none; }
+</style>

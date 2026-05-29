@@ -1,0 +1,47 @@
+---
+/**
+ * Place — the placement primitive. Positions ANY slotted content (text,
+ * post-it, scribble, image, mockup, live component, …) freely on the Canvas.
+ *
+ * Coordinates are design-pixels in the Canvas coordinate space. Desktop props
+ * are the base; `tablet` / `mobile` selectively override and inherit anything
+ * they omit (mobile ← tablet ← desktop). Positioning is pure CSS — this only
+ * emits per-breakpoint custom properties; the static rules live in global.css
+ * (`.cv-place`), so the scale on <Canvas> handles fit.
+ */
+interface Layout {
+  x?: number;
+  y?: number;
+  rotate?: number;
+  z?: number;
+  /** Fixed width in design-px; omit to size to content. */
+  w?: number;
+}
+interface Props extends Layout {
+  tablet?: Layout;
+  mobile?: Layout;
+  /** Stable id — required for the dev drag editor / saved layouts. */
+  id?: string;
+  /** Saved per-breakpoint overrides (from src/data/layouts/<page>.json). */
+  saved?: Partial<Record<'desktop' | 'tablet' | 'mobile', Layout>>;
+  class?: string;
+}
+
+const { x = 0, y = 0, rotate = 0, z = 1, w, tablet = {}, mobile = {}, id, saved = {}, class: className } = Astro.props;
+
+// Inheritance chain (mobile ← tablet ← desktop); saved values win at each level.
+const desktop = { x, y, rotate, z, w, ...saved.desktop };
+const t = { ...desktop, ...tablet, ...saved.tablet };
+const m = { ...t, ...mobile, ...saved.mobile };
+
+const width = (v: number | undefined) => (v == null ? 'auto' : `${v}px`);
+
+const vars = [
+  `--x-d:${desktop.x}`, `--y-d:${desktop.y}`, `--rot-d:${desktop.rotate}`, `--z-d:${desktop.z}`, `--w-d:${width(desktop.w)}`,
+  `--x-t:${t.x}`, `--y-t:${t.y}`, `--rot-t:${t.rotate}`, `--z-t:${t.z}`, `--w-t:${width(t.w)}`,
+  `--x-m:${m.x}`, `--y-m:${m.y}`, `--rot-m:${m.rotate}`, `--z-m:${m.z}`, `--w-m:${width(m.w)}`,
+].join(';');
+---
+<div class:list={['cv-place', className]} style={vars} data-cv-id={id}>
+  <slot />
+</div>

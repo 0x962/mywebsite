@@ -1,0 +1,50 @@
+---
+title: "Browser plugin for UI design"
+date: 2026-05-27
+summary: "Two ways to spin up modified versions of our UI fast with AI — copy the frontend and edit the copy, or edit the real product live in the browser — and what each would actually take."
+draft: false
+---
+Two things we keep needing at work:
+
+- **Demos.** Rebranded versions of the product for whichever enterprise prospect sales is pitching — their branding, their data, the right feature flags.
+- **Quick designs for engineering tickets.** Someone wants to show a UI change — sometimes small, sometimes bigger — well enough that the team can react to it. Today that's a screenshot into Figma Make: build a base from the screenshot, iterate on top.
+
+Same job both times: produce a modified version of our UI, fast, without a designer or engineer hand-building each one.
+
+There are two ways to do it.
+
+- **A** — copy the frontend, edit the copy.
+- **B** — edit the real product, live, in the browser.
+
+## A — Copy & edit
+
+Make a static copy of the frontend, sample data baked in as fixed states. A coding agent recolors it to spin up demo environments; the chatbot is the front door — point it at the customer's site, it rebrands.
+
+We built this. It works. It also has three problems:
+
+- **The copy drifts.** Changes to the real frontend don't show up in the copy. Someone has to keep them in sync. This is the one that bothers me most.
+- **Making it look good is slow.** Multiple rounds with the agent — worse because the people driving it are non-technical (sales).
+- **It just moves the cost center.** We're not paying for design anymore. We're paying for engineering.
+
+Take it seriously anyway. What would it actually need?
+
+A model that looks at the product the way a person does: screenshots, the rendered DOM and HTML, the source code itself. We have all of that, and we can generate the copy. The only real bar is whether it can do it well enough to stop needing constant steering.
+
+Right now it can't. On the Max plans / API billing, even Opus needs a fair amount of steering.
+
+But copying a whole codebase like this was never realistic before — months of work. Now it's two or three weeks. It's still horrible work, and I'm not sure the human is needed for it. If the code is genuinely throwaway — never ships, all black boxes — maybe nobody steers. Maybe you just need a feedback loop that keeps inspecting the thing until an agent can pass it off.
+
+## B — Live edit
+
+No copy. You open the actual page — real branding, real data, the real customer's feature flags — and the page is the canvas. Describe a change in a sentence; an agent reads the DOM, writes a bit of CSS or JS, injects it. Nothing to keep in sync, because there's nothing to sync. You're already on the thing you'd ship.
+
+Its own problems:
+
+- **Complex apps resist JS injection.** The agent has to work very hard to change anything structural.
+- **Easy things stay easy, hard things stay hard.** Colors and text, fine. Beyond that it's like Claude Code in a stripped-down environment — almost no tools — and the Max plans need handholding to get to decent quality.
+
+## Where it lands
+
+Both approaches bottleneck on the same thing: a model that can look at a UI and change it well without someone steering every step. A is feasible-but-grim manual work that might not even need a human. B is cleaner in principle but blocked on injecting into complex apps.
+
+So is there actually a way to do this yet? Or are we just early?

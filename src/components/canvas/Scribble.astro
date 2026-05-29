@@ -1,0 +1,112 @@
+---
+/**
+ * Scribble — hand-drawn marks rendered to STATIC inline SVG at build time via
+ * roughjs (fixed seed → deterministic, crawlable, zero client JS, no layout
+ * shift). Drop inside a <Place> to position/rotate it anywhere.
+ *
+ * Stroke/fill are emitted as `currentColor`, so colour is themed by the `color`
+ * prop (default: the accent) and scales with the canvas.
+ */
+import rough from 'roughjs/bundled/rough.esm.js';
+
+type ScribbleType = 'circle' | 'box' | 'underline' | 'line' | 'arrow' | 'squiggle' | 'heart';
+
+interface Props {
+  type?: ScribbleType;
+  /** SVG box in design-px. */
+  w: number;
+  h?: number;
+  color?: string;
+  strokeWidth?: number;
+  roughness?: number;
+  seed?: number;
+  /** Optional fill (for circle/box/heart). */
+  fill?: string;
+  fillStyle?: string;
+  class?: string;
+}
+
+const {
+  type = 'circle',
+  w,
+  h = type === 'underline' || type === 'line' ? 14 : w,
+  color = 'var(--accent-color)',
+  strokeWidth = 1.8,
+  roughness = 1.5,
+  seed = 1,
+  fill,
+  fillStyle = 'hachure',
+  class: className,
+} = Astro.props;
+
+const gen = rough.generator();
+const opts = { seed, roughness, strokeWidth, stroke: '#000', ...(fill ? { fill: '#000', fillStyle, hachureGap: 6 } : {}) };
+const p = strokeWidth + 3;
+
+const drawables = (() => {
+  const cy = h / 2;
+  switch (type) {
+    case 'heart': {
+      // Heart authored in a 100×92 box, scaled to w×h.
+      const sx = w / 100, sy = h / 92;
+      const P = (x: number, y: number) => `${(x * sx).toFixed(1)} ${(y * sy).toFixed(1)}`;
+      const d =
+        `M${P(50, 86)} C${P(22, 64)} ${P(10, 46)} ${P(10, 30)} ` +
+        `C${P(10, 16)} ${P(22, 9)} ${P(33, 13)} C${P(41, 16)} ${P(50, 28)} ${P(50, 28)} ` +
+        `C${P(50, 28)} ${P(59, 16)} ${P(67, 13)} C${P(78, 9)} ${P(90, 16)} ${P(90, 30)} ` +
+        `C${P(90, 46)} ${P(78, 64)} ${P(50, 86)} Z`;
+      return [gen.path(d, opts)];
+    }
+    case 'box':
+      return [gen.rectangle(p, p, w - 2 * p, h - 2 * p, opts)];
+    case 'underline':
+    case 'line':
+      return [gen.line(2, cy, w - 2, cy, opts)];
+    case 'arrow': {
+      const tipX = w - 3;
+      const head = Math.min(14, h / 2);
+      return [
+        gen.line(3, cy, tipX, cy, opts),
+        gen.line(tipX, cy, tipX - head, cy - head * 0.7, opts),
+        gen.line(tipX, cy, tipX - head, cy + head * 0.7, opts),
+      ];
+    }
+    case 'squiggle': {
+      const n = Math.max(4, Math.round(w / 28));
+      const amp = h / 2 - 2;
+      const pts: [number, number][] = [];
+      for (let i = 0; i <= n; i++) {
+        const x = 2 + ((w - 4) * i) / n;
+        pts.push([x, cy + (i % 2 === 0 ? -amp : amp)]);
+      }
+      return [gen.curve(pts, opts)];
+    }
+    case 'circle':
+    default:
+      return [gen.ellipse(w / 2, h / 2, w - 2 * p, h - 2 * p, opts)];
+  }
+})();
+
+const paths = drawables.flatMap((d) => gen.toPaths(d));
+const colorOf = (v: string | undefined) => (v && v !== 'none' ? 'currentColor' : 'none');
+---
+<svg
+  class:list={['cv-scribble', className]}
+  width={w}
+  height={h}
+  viewBox={`0 0 ${w} ${h}`}
+  fill="none"
+  style={`color:${color}`}
+  aria-hidden="true"
+  role="presentation"
+>
+  {paths.map((path) => (
+    <path
+      d={path.d}
+      stroke={colorOf(path.stroke)}
+      stroke-width={path.strokeWidth}
+      fill={colorOf(path.fill)}
+      stroke-linecap="round"
+    />
+  ))}
+</svg>

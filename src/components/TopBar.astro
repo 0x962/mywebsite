@@ -3,8 +3,6 @@ const { pathname } = Astro.url;
 const isActive = (href: string) => pathname === href || pathname.startsWith(href);
 
 const links = [
-  { href: '/writing/', label: 'writing' },
-  { href: '/now/', label: 'now' },
   { href: '/about/', label: 'about' },
 ];
 
@@ -12,9 +10,12 @@ const isHome = pathname === '/' || pathname === '';
 ---
 <header class="topbar" role="banner">
   <div class="topbar-inner">
-    <a href="/" class="wordmark" aria-label="Home" data-active={isHome ? '' : null}>
-      nvdk
-    </a>
+    <div class="wordmark-group">
+      <a href="/" class="wordmark" aria-label="Home" data-active={isHome ? '' : null}>
+        nvdk
+      </a>
+      <span class="wordmark-wip" aria-hidden="true">(wip)</span>
+    </div>
     <nav class="topbar-nav" aria-label="primary">
       {links.map((l) => (
         <a

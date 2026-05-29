@@ -1,0 +1,225 @@
+---
+/**
+ * Inline hand-drawn wireframe of the tool, in the PaperCSS sketch style
+ * (getpapercss.com) — the wobbly border-radius recipe + dashed dividers,
+ * scoped to `.wf` so it can't leak into the rest of the site. Monochrome
+ * "chalk on dark" to match the scribble theme. Laptop aspect ratio.
+ *
+ * Left: the page being edited — just a placeholder ("some website"), not
+ * the point. Right: the product — a real chat with a message thread and
+ * an input box, the actual thing worth showing.
+ */
+---
+<figure class="wf">
+  <div class="wf-window">
+    <div class="wf-titlebar">
+      <span class="wf-dots"><i></i><i></i><i></i></span>
+      <span class="wf-url">app.pivot.co/settings</span>
+    </div>
+
+    <div class="wf-body">
+      <!-- The page being edited — intentionally undetailed. -->
+      <div class="wf-site">
+        <span class="wf-site-label">some website</span>
+      </div>
+
+      <!-- The product — a real chat. -->
+      <div class="wf-chat">
+        <div class="wf-chat-head"><span class="wf-mark">✦</span> the chat</div>
+
+        <div class="wf-thread">
+          <div class="wf-msg wf-from-user">
+            Add a confirmation modal when the user clicks Delete.
+          </div>
+          <div class="wf-msg wf-from-agent">
+            Done. Delete now opens a modal — “Delete this item? This can’t be
+            undone.” — with Cancel and Delete buttons, styled to match the page.
+          </div>
+          <div class="wf-msg wf-from-user">
+            Make the Delete button red.
+          </div>
+          <div class="wf-msg wf-from-agent">
+            Updated — it’s red now, same rounded shape as your other buttons.
+          </div>
+        </div>
+
+        <div class="wf-input">
+          <span class="wf-input-text">Now show a toast after it deletes…</span>
+          <span class="wf-send">Send</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <figcaption class="wf-cap">a quick sketch of the idea</figcaption>
+</figure>
+
+<style>
+  /* PaperCSS hand-drawn vocabulary, scoped to the wireframe. */
+  .wf {
+    --ink: #c8c8cc;
+    --ink-soft: #8a8a90;
+    --accent: #fbbf24;
+    /* Break out of the prose column: fill the content box and extend left
+       across the gutter + gap (160px) so the sketch is large and legible.
+       Bounded by the content box, so it never overflows the manuscript. */
+    max-width: none;
+    width: calc(100% + var(--gutter-width) + 40px);
+    margin: 3rem 0 3rem calc(-1 * (var(--gutter-width) + 40px));
+    font-family: var(--font-sans);
+    color: var(--ink);
+  }
+
+  /* Signature PaperCSS wobbly border. */
+  .wf-window,
+  .wf-msg,
+  .wf-input,
+  .wf-send,
+  .wf-site {
+    border: 2px solid var(--ink);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    background: transparent;
+  }
+
+  .wf-window {
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 16 / 10;
+    box-shadow: 8px 14px 0 -3px rgba(0, 0, 0, 0.45);
+    background: rgba(255, 255, 255, 0.015);
+  }
+
+  /* Title bar */
+  .wf-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 13px 20px;
+    border-bottom: 2px solid var(--ink);
+    flex-shrink: 0;
+  }
+  .wf-dots { display: inline-flex; gap: 8px; }
+  .wf-dots i {
+    width: 12px; height: 12px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    display: block;
+  }
+  .wf-url {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    border: 2px solid var(--ink);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    padding: 4px 14px;
+    flex: 1;
+  }
+
+  /* Two-column body fills the rest of the laptop screen. */
+  .wf-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+  }
+
+  /* Left: undetailed placeholder page. */
+  .wf-site {
+    border: 0;
+    border-right: 2px dashed var(--ink);
+    border-radius: 0;
+    display: grid;
+    place-items: center;
+  }
+  .wf-site-label {
+    font-family: 'Caveat', cursive;
+    font-size: 2.4rem;
+    color: var(--ink-soft);
+  }
+
+  /* Right: the chat. */
+  .wf-chat {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px 18px;
+  }
+  .wf-chat-head {
+    font-family: 'Caveat', cursive;
+    font-size: 1.9rem;
+    color: var(--ink);
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .wf-mark { font-family: var(--font-sans); color: var(--accent); }
+
+  .wf-thread {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .wf-msg {
+    max-width: 88%;
+    padding: 10px 14px;
+    font-size: 0.96rem;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .wf-from-user {
+    align-self: flex-end;
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px;
+  }
+  .wf-from-agent {
+    align-self: flex-start;
+    color: var(--ink-soft);
+  }
+
+  /* Bottom input row with text + send button. */
+  .wf-input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 8px 8px 8px 16px;
+    flex-shrink: 0;
+  }
+  .wf-input-text {
+    flex: 1;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .wf-send {
+    font-size: 0.9rem;
+    color: var(--accent);
+    border-color: var(--accent);
+    padding: 6px 18px;
+    flex-shrink: 0;
+  }
+
+  .wf-cap {
+    margin-top: 14px;
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1.35rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 760px) {
+    /* Drop the desktop breakout — the column has no gutter to reach into. */
+    .wf {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .wf-window { aspect-ratio: auto; }
+    .wf-body { grid-template-columns: 1fr; }
+    .wf-site {
+      border-right: 0;
+      border-bottom: 2px dashed var(--ink);
+      min-height: 120px;
+    }
+    .wf-thread { overflow: visible; }
+  }
+</style>

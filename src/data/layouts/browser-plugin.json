@@ -1,0 +1,79 @@
+{
+  "lede": {
+    "desktop": {
+      "x": 59,
+      "y": 341,
+      "rotate": 0
+    }
+  },
+  "usecases-label": {
+    "desktop": {
+      "x": 63,
+      "y": 106,
+      "rotate": 0
+    }
+  },
+  "card-demos": {
+    "desktop": {
+      "x": 62,
+      "y": 152,
+      "rotate": -1
+    }
+  },
+  "card-tickets": {
+    "desktop": {
+      "x": 379,
+      "y": 145,
+      "rotate": 1
+    }
+  },
+  "twoways": {
+    "desktop": {
+      "x": 51,
+      "y": 447,
+      "rotate": -1
+    }
+  },
+  "track-a": {
+    "desktop": {
+      "x": 55,
+      "y": 561,
+      "rotate": 0
+    }
+  },
+  "fork-arrow-a": {
+    "desktop": {
+      "x": 244,
+      "y": 470,
+      "rotate": 28
+    }
+  },
+  "track-b": {
+    "desktop": {
+      "x": 681,
+      "y": 576,
+      "rotate": 0
+    }
+  },
+  "fork-arrow-b": {
+    "desktop": {
+      "x": 64,
+      "y": 1439,
+      "rotate": -6
+    }
+  },
+  "lands": {
+    "desktop": {
+      "x": 59,
+      "y": 1301,
+      "rotate": 0
+    }
+  },
+  "title": {
+    "desktop": {
+      "x": 64,
+      "y": 19,
+      "rotate": 0
+    }
+  }
+}

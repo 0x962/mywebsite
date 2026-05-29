@@ -1,0 +1,26 @@
+---
+/**
+ * Marks a chunk of content so a <MarginNote> can point at it.
+ * Default is a span (inline). Set `block` for block-level content
+ * (lists, figures, paragraphs you want wrapped).
+ */
+interface Props {
+  id: string;
+  block?: boolean;
+}
+const { id, block = false } = Astro.props;
+const Tag = block ? 'div' : 'span';
+---
+<Tag class="ann-anchor" data-anchor-id={id}>
+  <slot />
+</Tag>
+
+<style>
+  .ann-anchor {
+    /* Inline anchors should flow naturally; the annotation overlay sits on top. */
+    position: relative;
+  }
+  div.ann-anchor {
+    display: block;
+  }
+</style>

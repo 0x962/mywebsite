@@ -1,0 +1,68 @@
+---
+/**
+ * Canvas — the open-workspace stage.
+ *
+ * Establishes a bounded, scroll-only design stage. Authoring happens in plain
+ * design-pixels on a fixed design width per breakpoint; the controller
+ * (src/scripts/canvas.ts) scales the whole stage uniformly to fit the viewport
+ * (capped at 1×, so wide screens get centered black margins) and sets the
+ * flowed height. Children are positioned with <Place>. One <Canvas> per page.
+ *
+ * Design widths/heights per breakpoint are design-pixels, not CSS pixels —
+ * they describe the coordinate space you author in, then everything scales.
+ */
+interface Props {
+  /** Page key — used for the dev editor's saved-layout file (<page>.json). */
+  page: string;
+  /** Desktop (≥1024px) design width / height, in design-px. */
+  width?: number;
+  height: number;
+  /** Tablet (640–1023px) overrides. Fall back to desktop if omitted. */
+  tabletWidth?: number;
+  tabletHeight?: number;
+  /** Mobile (<640px) overrides. Fall back to tablet if omitted. */
+  mobileWidth?: number;
+  mobileHeight?: number;
+  /** Cap the zoom-to-fill scale (default: uncapped). */
+  maxScale?: number;
+  class?: string;
+}
+
+const {
+  page,
+  width = 1280,
+  height,
+  tabletWidth = 760,
+  tabletHeight = height,
+  mobileWidth = 380,
+  mobileHeight = tabletHeight,
+  maxScale,
+  class: className,
+} = Astro.props;
+
+const vars = [
+  `--cv-dw-d:${width}`,
+  `--cv-h-d:${height}`,
+  `--cv-dw-t:${tabletWidth}`,
+  `--cv-h-t:${tabletHeight}`,
+  `--cv-dw-m:${mobileWidth}`,
+  `--cv-h-m:${mobileHeight}`,
+  ...(maxScale ? [`--cv-max-scale:${maxScale}`] : []),
+].join(';');
+---
+<div class:list={['canvas', className]} data-canvas data-cv-page={page} style={vars}>
+  <div class="canvas-stage" data-canvas-stage>
+    <slot />
+  </div>
+</div>
+
+<script>
+  import { initCanvases } from '../../scripts/canvas';
+  initCanvases();
+
+  // Drag editor is dev-only (dead-code-eliminated from prod builds) AND only
+  // activates with ?edit in the URL — so local viewing stays click-through.
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('edit')) {
+    import('../../scripts/canvas-editor').then((m) => m.initCanvasEditor());
+  }
+</script>

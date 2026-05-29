@@ -1,0 +1,66 @@
+---
+/**
+ * Polaroid — a photo in a paper frame with a handwritten caption, for the
+ * scrapbook/memoir canvas. Position & rotate it with a wrapping <Place>.
+ * Missing images hide themselves (parity with the old about page).
+ */
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  /** Show a strip of tape at the top. */
+  tape?: boolean;
+  class?: string;
+}
+const { src, alt, caption, tape = true, class: className } = Astro.props;
+---
+<figure class:list={['polaroid', { 'has-tape': tape }, className]}>
+  <div class="image-wrap">
+    <img src={src} alt={alt} loading="lazy" onerror="this.closest('figure').style.display='none'" />
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .polaroid {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 9px 9px 0;
+    background: #f1ede3;
+    border-radius: 2px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4), 0 14px 28px rgba(0, 0, 0, 0.5);
+  }
+  .polaroid .image-wrap {
+    display: block;
+    overflow: hidden;
+    background: #0a0a0b;
+    border-radius: 1px;
+  }
+  .polaroid img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .polaroid figcaption {
+    font-family: 'Caveat', var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.15;
+    color: #2a2620;
+    text-align: center;
+    padding: 7px 4px 11px;
+  }
+  /* a strip of translucent tape at the top edge */
+  .polaroid.has-tape::before {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    width: 86px;
+    height: 22px;
+    transform: translateX(-50%) rotate(-2.5deg);
+    background: rgba(220, 220, 210, 0.22);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+  }
+</style>

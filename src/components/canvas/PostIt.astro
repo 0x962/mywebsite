@@ -1,0 +1,99 @@
+---
+/**
+ * PostIt — a sticky-note card, used for blog posts on the canvas. A real
+ * <a href> with real text (crawlable, accessible). Position/rotate it with a
+ * wrapping <Place>; the hover lift lives on the card itself so it doesn't
+ * fight Place's transform.
+ */
+type Color = 'amber' | 'blue' | 'green' | 'pink' | 'paper';
+
+interface Props {
+  title: string;
+  href: string;
+  summary?: string;
+  date?: string;
+  color?: Color;
+  class?: string;
+}
+
+const { title, href, summary, date, color = 'amber', class: className } = Astro.props;
+---
+<a href={href} class:list={['postit', `postit-${color}`, className]}>
+  {date && <span class="postit-date">{date}</span>}
+  <span class="postit-title">{title}</span>
+  {summary && <span class="postit-summary">{summary}</span>}
+  <span class="postit-open" aria-hidden="true">open ↗</span>
+</a>
+
+<style>
+  .postit {
+    --ink: #26231c;
+    --ink-soft: color-mix(in srgb, var(--ink) 60%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    padding: 18px 20px 16px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--paper);
+    border-radius: 2px;
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.4),
+      0 10px 22px rgba(0, 0, 0, 0.45);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    /* faint folded-corner depth */
+    background-image: linear-gradient(135deg, transparent 88%, rgba(0, 0, 0, 0.12) 100%);
+  }
+  .postit:hover,
+  .postit:focus-visible {
+    transform: translateY(-5px);
+    box-shadow:
+      0 2px 2px rgba(0, 0, 0, 0.4),
+      0 18px 34px rgba(0, 0, 0, 0.55);
+    outline: none;
+  }
+
+  .postit-date {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .postit-title {
+    font-family: var(--font-serif);
+    font-size: 1.18rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .postit-summary {
+    font-family: var(--font-serif);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+  .postit-open {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-top: 2px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .postit:hover .postit-open,
+  .postit:focus-visible .postit-open { opacity: 1; }
+
+  .postit-amber { --paper: #e6cd7e; }
+  .postit-blue  { --paper: #aecbe2; --ink: #16222e; }
+  .postit-green { --paper: #b9d4a2; --ink: #1c2914; }
+  .postit-pink  { --paper: #e6b6bf; --ink: #2c151a; }
+  .postit-paper { --paper: #e9e3d5; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .postit:hover, .postit:focus-visible { transform: none; }
+  }
+</style>
