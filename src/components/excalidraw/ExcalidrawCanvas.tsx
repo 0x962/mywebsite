@@ -9,24 +9,31 @@ type Theme = "light" | "dark";
  * Excalidraw canvas island. ONE mode for everyone — the canvas is always
  * fully editable. Autosave attempts hit `PUT /api/scenes/<slug>`:
  *
- *   • Admin (Access JWT cookie present) → write succeeds, scene persists.
- *   • Anyone else → write 401s; we show a small "local-only" banner and
- *     stop retrying for the session. The visitor can keep editing in their
- *     browser and use Excalidraw's hamburger menu → "Save to disk" to grab
- *     a .excalidraw file.
+ *   • Admin (Access cookie present) → write succeeds, scene persists.
+ *   • Anyone else → write 401s; we flip into local-only mode and stop
+ *     retrying. A one-shot banner explains it auto-dismisses.
  *
- * Mounted as `client:only="react"` — Excalidraw is browser-only.
+ * ANTI-DATAWIPE GUARDS (NEVER REMOVE WITHOUT THINKING):
+ *
+ *   1. We never save unless the initial load explicitly succeeded
+ *      (`loadedRealScene` ref). Fetch errors → fall through to blank, but
+ *      blank can never be PUT back.
+ *   2. We refuse to save a scene whose non-deleted element count is LESS
+ *      than what we loaded (`loadedElementCount` ref). Real deletes still
+ *      work — but only if the canvas first saw the full load. A racing
+ *      mount that briefly has zero elements can't clobber a real scene.
+ *
+ * Both guards exist because earlier versions of this file have wiped real
+ * KV content twice. The blast radius is total (KV is the source of truth).
  */
 interface Props {
-  /** A pre-loaded Excalidraw scene; when omitted, fetched from /data/scenes/<slug>. */
   initialData?: Record<string, unknown> | null;
-  /** Post slug — both the API key and the save target. */
   slug?: string;
-  /** UI + canvas theme. Defaults to dark to match the site. */
   theme?: Theme;
 }
 
 const SAVE_DEBOUNCE_MS = 800;
+const NOTICE_MS = 6000;
 const READ_BASE = "/data/scenes/";
 const WRITE_BASE = "/api/scenes/";
 
@@ -53,15 +60,33 @@ function renderEmbeddable(element: { link?: string | null }) {
   );
 }
 
+const liveCount = (elements: unknown): number => {
+  if (!Array.isArray(elements)) return 0;
+  let n = 0;
+  for (const e of elements) {
+    if (e && typeof e === "object" && !(e as { isDeleted?: boolean }).isDeleted) n++;
+  }
+  return n;
+};
+
 export default function ExcalidrawCanvas({ initialData = null, slug, theme = "dark" }: Props) {
   const [scene, setScene] = useState<Record<string, unknown> | null>(initialData);
   const [loadError, setLoadError] = useState<string>("");
-  const [localOnly, setLocalOnly] = useState(false);
+  const localOnly = useRef(false);
+  const [noticeVisible, setNoticeVisible] = useState(false);
+  const noticeShown = useRef(false);
   const [savingLabel, setSavingLabel] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sawMountChange = useRef(false);
 
-  // Fetch the scene from KV on mount (always; visitors and admin both).
+  // Guards against accidental wipes — see file header.
+  const loadedRealScene = useRef(initialData != null);
+  const loadedElementCount = useRef(
+    initialData && Array.isArray((initialData as { elements?: unknown }).elements)
+      ? liveCount((initialData as { elements?: unknown[] }).elements)
+      : 0,
+  );
+
   useEffect(() => {
     if (initialData || !slug || scene) return;
     let cancelled = false;
@@ -70,25 +95,53 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
         const res = await fetch(READ_BASE + encodeURIComponent(slug), { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!cancelled) setScene(data);
+        if (cancelled) return;
+        loadedRealScene.current = true;
+        loadedElementCount.current = liveCount((data as { elements?: unknown }).elements);
+        setScene(data);
       } catch (err) {
         if (cancelled) return;
         setLoadError(String(err));
+        // IMPORTANT: do NOT set loadedRealScene = true here. The fallback
+        // exists only so React can render *something* for the user; the
+        // save path stays disabled so this blank can never be PUT back.
         setScene({ elements: [], appState: { viewBackgroundColor: "#ffffff" }, files: {} });
       }
     })();
     return () => { cancelled = true; };
   }, [slug, initialData, scene]);
 
+  const flipToLocalOnly = useCallback(() => {
+    if (localOnly.current) return;
+    localOnly.current = true;
+    setSavingLabel("");
+    if (noticeShown.current) return;
+    noticeShown.current = true;
+    setNoticeVisible(true);
+    setTimeout(() => setNoticeVisible(false), NOTICE_MS);
+  }, []);
+
   const onChange = useCallback(
     (elements: any, appState: any, files: any) => {
-      if (!slug || localOnly) return;
-      // Excalidraw fires onChange once on mount echoing the loaded scene.
-      // Skip that first one so opening the page never rewrites the file.
+      if (!slug || localOnly.current) return;
+
+      // GUARD 1: never save if the initial load failed.
+      if (!loadedRealScene.current) return;
+
+      // Skip the synthetic onChange Excalidraw fires on mount echoing the loaded scene.
       if (!sawMountChange.current) {
         sawMountChange.current = true;
         return;
       }
+
+      // GUARD 2: refuse to shrink. If the in-canvas scene has fewer live
+      // elements than what we loaded, it's almost certainly a mount race
+      // (Excalidraw briefly reports an empty state during scrollToContent
+      // / library hydration / theme change). Skip the save — wait for a
+      // change that at least matches the loaded count.
+      const now = liveCount(elements);
+      if (now < loadedElementCount.current) return;
+
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(async () => {
         const sceneJson = serializeAsJSON(elements, appState, files, "local");
@@ -98,24 +151,22 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
             method: "PUT",
             headers: { "content-type": "application/json" },
             body: sceneJson,
-            redirect: "manual", // Don't follow Access's cross-origin login redirect (CORS-blocks anyway).
+            redirect: "manual",
           });
           if (res.ok) {
+            // Successful save → the canvas size IS the new baseline.
+            loadedElementCount.current = now;
             setSavingLabel("saved");
             setTimeout(() => setSavingLabel(""), 1200);
             return;
           }
-          // Anything non-2xx (401, 403, opaqueredirect, etc.) → not authed.
-          setLocalOnly(true);
-          setSavingLabel("");
+          flipToLocalOnly();
         } catch {
-          // Network error / CORS / opaqueredirect — treat as not authed.
-          setLocalOnly(true);
-          setSavingLabel("");
+          flipToLocalOnly();
         }
       }, SAVE_DEBOUNCE_MS);
     },
-    [slug, localOnly],
+    [slug, flipToLocalOnly],
   );
 
   if (!scene) {
@@ -138,22 +189,20 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
   return (
     <div className="excalidraw-stage">
       <Excalidraw
-        // scrollToContent auto-fits the viewport to existing elements on mount,
-        // so visitors land on the actual drawing instead of an empty corner.
         initialData={{ ...scene, libraryItems: DEFAULT_LIBRARY_ITEMS, scrollToContent: true }}
         theme={theme}
         onChange={slug ? onChange : undefined}
         validateEmbeddable={validateEmbeddable}
         renderEmbeddable={renderEmbeddable}
       />
-      {(localOnly || savingLabel || loadError) && (
+      {(noticeVisible || savingLabel || loadError) && (
         <div
           style={{
             position: "fixed",
             left: 16,
             bottom: 16,
             zIndex: 100000,
-            maxWidth: 360,
+            maxWidth: 340,
             font: "11px/1.4 ui-monospace, 'JetBrains Mono', monospace",
             color: "#d4d4d8",
             background: "rgba(10, 10, 11, 0.92)",
@@ -162,16 +211,17 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
             padding: "8px 11px",
             pointerEvents: "none",
             letterSpacing: "0.01em",
+            transition: "opacity 0.4s ease",
           }}
         >
           {loadError && <div style={{ color: "#f87171" }}>load failed: {loadError}</div>}
-          {localOnly && (
+          {noticeVisible && (
             <div>
-              edits stay in your browser only. sign in at <span style={{ color: "#60a5fa" }}>/admin</span> to
-              persist — or use the hamburger menu → <em>Save to…</em> to download.
+              you're free to play with this — your changes stay in your browser and won't change the post.
+              hamburger menu → <em>Save to…</em> to download a copy.
             </div>
           )}
-          {!localOnly && savingLabel && <div>{savingLabel}</div>}
+          {!noticeVisible && savingLabel && <div>{savingLabel}</div>}
         </div>
       )}
     </div>
