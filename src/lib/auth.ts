@@ -28,7 +28,10 @@
  *
  * Config (wrangler.toml [vars] or `wrangler secret put`):
  *   CF_ACCESS_TEAM_DOMAIN  e.g. "nvdk"  (-> https://nvdk.cloudflareaccess.com)
- *   CF_ACCESS_AUD          the app's AUD tag from the Access dashboard
+ *   CF_ACCESS_AUD          comma-separated AUD tags (one per Access app
+ *                          that fronts a protected path — admin, posts api,
+ *                          scenes-write). The JWT's `aud` claim must match
+ *                          one of them.
  *   ADMIN_EMAILS           comma-separated allowlist
  *
  * Until CF_ACCESS_AUD is set, ALL writes fail closed — better than silently
@@ -105,7 +108,7 @@ async function getJwks(team: string): Promise<Jwk[]> {
 async function verifyAccessJwt(
   jwt: string,
   team: string,
-  expectedAud: string,
+  expectedAuds: string[],
 ): Promise<AccessJwtPayload | null> {
   const parts = jwt.split('.');
   if (parts.length !== 3) return null;
@@ -131,7 +134,7 @@ async function verifyAccessJwt(
   if (payload.iss !== expectedIss) return null;
 
   const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!auds.includes(expectedAud)) return null;
+  if (!auds.some((a) => typeof a === 'string' && expectedAuds.includes(a))) return null;
 
   let keys: Jwk[];
   try {
@@ -189,8 +192,11 @@ export async function requireAdmin(request: Request, env: RuntimeEnv): Promise<R
   }
 
   const team = env.CF_ACCESS_TEAM_DOMAIN;
-  const aud = env.CF_ACCESS_AUD;
-  if (!team || !aud) {
+  const auds = (env.CF_ACCESS_AUD ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!team || auds.length === 0) {
     // Fail closed when not yet configured — never fall back to header trust.
     return unauthorized('Access not configured: set CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD');
   }
@@ -198,7 +204,7 @@ export async function requireAdmin(request: Request, env: RuntimeEnv): Promise<R
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
   if (!jwt) return unauthorized('missing Cf-Access-Jwt-Assertion');
 
-  const payload = await verifyAccessJwt(jwt, team, aud);
+  const payload = await verifyAccessJwt(jwt, team, auds);
   if (!payload || !payload.email) return unauthorized('invalid Access token');
 
   const allowed = (env.ADMIN_EMAILS ?? '')

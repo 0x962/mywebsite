@@ -35,7 +35,8 @@ interface Props {
 }
 
 const SAVE_DEBOUNCE_MS = 800;
-const API_BASE = "/api/scenes/";
+const READ_BASE = "/data/scenes/";    // public GET (outside Access)
+const WRITE_BASE = "/api/scenes/";    // PUT, Access-gated
 
 function validateEmbeddable(url: string): boolean {
   try {
@@ -87,7 +88,7 @@ export default function ExcalidrawCanvas({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(API_BASE + encodeURIComponent(slug), { cache: "no-store" });
+        const res = await fetch(READ_BASE + encodeURIComponent(slug), { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) setScene(data);
@@ -115,7 +116,7 @@ export default function ExcalidrawCanvas({
         const sceneJson = serializeAsJSON(elements, appState, files, "local");
         setStatus("saving…");
         try {
-          const res = await fetch(API_BASE + encodeURIComponent(slug), {
+          const res = await fetch(WRITE_BASE + encodeURIComponent(slug), {
             method: "PUT",
             headers: { "content-type": "application/json" },
             body: sceneJson,

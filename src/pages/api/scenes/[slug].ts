@@ -1,7 +1,12 @@
 import type { APIRoute } from 'astro';
 import { requireAdmin, type RuntimeEnv } from '../../../lib/auth';
-import { isSlug, readScene, writeScene } from '../../../lib/scenes';
+import { isSlug, writeScene } from '../../../lib/scenes';
 
+/**
+ * Scene write endpoint. PUT only — public reads live at /data/scenes/<slug>
+ * (outside the Access-gated /api/ tree, since Access JSON apps don't support
+ * per-method include rules).
+ */
 export const prerender = false;
 
 const json = (data: unknown, status = 200) =>
@@ -16,14 +21,6 @@ function env(locals: App.Locals): RuntimeEnv {
   return runtime.env;
 }
 
-// GET: public read. The canvas page calls this on mount.
-export const GET: APIRoute = async ({ params, locals }) => {
-  if (!isSlug(params.slug)) return json({ error: 'bad slug' }, 400);
-  const scene = await readScene(env(locals).SCENES, params.slug);
-  return json(scene);
-};
-
-// PUT: admin-only write. Body must be the full Excalidraw scene JSON.
 export const PUT: APIRoute = async ({ params, request, locals }) => {
   if (!isSlug(params.slug)) return json({ error: 'bad slug' }, 400);
   const e = env(locals);
