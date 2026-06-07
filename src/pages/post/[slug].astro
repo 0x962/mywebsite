@@ -48,9 +48,12 @@ const pageTitle = `${meta.title} — Navid Khan — WIP`;
         top: var(--topbar-height, 56px);
         left: 0; right: 0; bottom: 0;
       }
-      :global(.excalidraw .FixedSideContainer_side_top) {
-        top: auto !important;
-        bottom: 64px !important;
+      :global(.excalidraw .App-toolbar-container) {
+        position: fixed !important;
+        left: 50% !important;
+        bottom: 20px !important;
+        transform: translateX(-50%);
+        z-index: 5;
       }
     </style>
   </head>
