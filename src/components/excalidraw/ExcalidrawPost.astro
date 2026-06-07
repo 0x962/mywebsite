@@ -36,7 +36,7 @@ const { title, date, summary } = entry.data;
 
 const canonical = new URL(`/wip/${slug}/`, Astro.site);
 const ogImage = new URL('/og-default.png', Astro.site);
-const pageTitle = `${title} — Navid Khan`;
+const pageTitle = `${title} — Navid Khan — WIP`;
 const blogPostingLd = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
@@ -67,7 +67,7 @@ const blogPostingLd = {
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={summary} />
     <meta property="og:url" content={canonical.toString()} />
-    <meta property="og:site_name" content="Navid Khan" />
+    <meta property="og:site_name" content="Navid Khan — WIP" />
     <meta property="og:image" content={ogImage.toString()} />
     <meta property="article:published_time" content={date.toISOString()} />
 
@@ -76,7 +76,7 @@ const blogPostingLd = {
     <meta name="twitter:description" content={summary} />
     <meta name="twitter:image" content={ogImage.toString()} />
 
-    <link rel="alternate" type="application/rss+xml" title="Navid Khan" href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Navid Khan — WIP" href="/rss.xml" />
 
     <script type="application/ld+json" set:html={JSON.stringify(blogPostingLd)} />
 

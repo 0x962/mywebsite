@@ -9,8 +9,8 @@ export async function GET(context: APIContext) {
     .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
   return rss({
-    title: 'Navid Khan',
-    description: 'Posts by Navid Khan.',
+    title: 'Navid Khan — WIP',
+    description: 'Work-in-progress notes, essays, and rough drafts by Navid Khan.',
     site: context.site!,
     items: posts.map((post) => ({
       title: post.data.title,
