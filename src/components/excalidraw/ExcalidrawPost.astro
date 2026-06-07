@@ -1,0 +1,108 @@
+---
+/**
+ * Reusable page wrapper for an Excalidraw canvas post.
+ *
+ * Renders a full-screen Excalidraw canvas with proper SEO <head> (title,
+ * description, OG, BlogPosting JSON-LD) pulled from the post's `posts`
+ * collection entry — so the post still feeds home post-its + RSS — plus a small
+ * "back to nvdk.co" link overlaid clear of Excalidraw's own UI.
+ *
+ * Read-only for visitors; the author edits locally via ?edit (see ExcalidrawCanvas).
+ *
+ * Usage (one thin page per post, mirroring the existing canvas-page convention):
+ *   ---
+ *   import ExcalidrawPost from '../../components/excalidraw/ExcalidrawPost.astro';
+ *   import scene from '../../data/scenes/<slug>.json';
+ *   ---
+ *   <ExcalidrawPost slug="<slug>" scene={scene} />
+ */
+import { getEntry } from 'astro:content';
+import ExcalidrawCanvas from './ExcalidrawCanvas.tsx';
+
+interface Props {
+  slug: string;
+  /** The saved scene JSON, imported by the page so it's bundled statically. */
+  scene: Record<string, unknown>;
+}
+
+const { slug, scene } = Astro.props;
+
+const entry = await getEntry('posts', slug);
+if (!entry) throw new Error(`ExcalidrawPost: no post entry for slug "${slug}"`);
+const { title, date, summary } = entry.data;
+
+const canonical = new URL(`/wip/${slug}/`, Astro.site);
+const ogImage = new URL('/og-default.png', Astro.site);
+const pageTitle = `${title} — Navid Khan`;
+const blogPostingLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description: summary,
+  datePublished: date.toISOString(),
+  author: { '@type': 'Person', name: 'Navid Khan', url: 'https://nvdk.co/' },
+  mainEntityOfPage: canonical.toString(),
+  url: canonical.toString(),
+  image: ogImage.toString(),
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="author" content="Navid Khan" />
+    <meta name="theme-color" content="#0a0a0b" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonical.toString()} />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={summary} />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={summary} />
+    <meta property="og:url" content={canonical.toString()} />
+    <meta property="og:site_name" content="Navid Khan" />
+    <meta property="og:image" content={ogImage.toString()} />
+    <meta property="article:published_time" content={date.toISOString()} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={summary} />
+    <meta name="twitter:image" content={ogImage.toString()} />
+
+    <link rel="alternate" type="application/rss+xml" title="Navid Khan" href="/rss.xml" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(blogPostingLd)} />
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      .ex-home-link {
+        position: fixed;
+        top: 14px;
+        right: 16px;
+        z-index: 5;
+        font: 13px/1 'JetBrains Mono', ui-monospace, monospace;
+        color: #1e1e1e;
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid #d6d6d6;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      .ex-home-link:hover {
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="ex-home-link" href="/">← nvdk.co</a>
+    <ExcalidrawCanvas client:only="react" initialData={scene} slug={slug} />
+  </body>
+</html>

@@ -9,6 +9,8 @@ const posts = defineCollection({
     summary: z.string(),
     sha: z.string().optional(),
     draft: z.boolean().optional().default(false),
+    /** Canvas posts authored in Excalidraw (page served by a dedicated .astro). */
+    canvas: z.enum(['excalidraw']).optional(),
   }),
 });
 

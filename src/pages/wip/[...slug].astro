@@ -5,7 +5,7 @@ import { getCollection, render } from 'astro:content';
 export async function getStaticPaths() {
   // Slugs with a bespoke canvas page of their own — served by their dedicated
   // .astro file instead of this generic renderer.
-  const CANVAS_PAGES = new Set(['browser-plugin-for-ui-design']);
+  const CANVAS_PAGES = new Set(['browser-plugin-for-ui-design', 'plot']);
   const posts = await getCollection('posts', ({ data }) => !data.draft);
   return posts
     .filter((post) => !CANVAS_PAGES.has(post.id))

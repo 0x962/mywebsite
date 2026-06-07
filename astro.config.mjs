@@ -15,8 +15,9 @@ import { sceneSavePlugin } from './src/dev/scene-save-plugin.mjs';
 const excalidrawPkg = fileURLToPath(
   new URL('./vendor/excalidraw/packages/excalidraw', import.meta.url),
 );
-// astro dev → NODE_ENV=development (dist/dev); astro build → production (dist/prod).
-const excalidrawDist = process.env.NODE_ENV === 'production' ? 'dist/prod' : 'dist/dev';
+// `astro build` (incl. `npm run deploy`) → prod bundle; `astro dev` → dev bundle.
+// Keyed off the CLI command, which is reliable at config-eval time (NODE_ENV isn't).
+const excalidrawDist = process.argv.includes('build') ? 'dist/prod' : 'dist/dev';
 
 export default defineConfig({
   site: 'https://nvdk.co',
