@@ -17,9 +17,11 @@ pages_build_output_dir = "./dist"
 [vars]
 ADMIN_EMAILS = "n@nvdk.co"
 CF_ACCESS_TEAM_DOMAIN = "navidkhanwip"
-# AUDs of the three Access apps fronting protected paths (admin, posts api,
-# scenes write). Auto-written by scripts/setup-access.mjs.
-CF_ACCESS_AUD = "f878d1f1f6b4e62b705f4db90c4399e32b0a9154e8759290a4526c2f40a8d63e,bd2d7bd37c08e20d7688488a38463cdc15e88b7d7205f1fce0f63d3932be226c,686f31ddcb742a1ea10fa0356b7290649b6157edbb4de66b4635ddde06b7da4f"
+# AUD of the consolidated Access app fronting /admin, /api/posts*, and
+# /api/scenes/*. One app means one session cookie, so editor PUTs from
+# the canvas don't trigger a fresh challenge (which would CORS-fail).
+# Auto-written by scripts/setup-access.mjs.
+CF_ACCESS_AUD = "4c8a7a62bf2ac72a6a0ecaa2764edffba7f83422b3e0ca3a7419c1aaa0e1834a"
 
 # Scene storage. KV value is the Excalidraw scene JSON for slug "<slug>",
 # stored under key "scene:<slug>". Post metadata for posts created online

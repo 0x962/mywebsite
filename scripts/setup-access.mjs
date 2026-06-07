@@ -1,27 +1,45 @@
 #!/usr/bin/env node
 /**
- * One-shot: create the three Cloudflare Access self-hosted applications
- * needed to gate /admin, /api/posts, and the write methods on /api/scenes.
+ * One-shot: create the single Cloudflare Access self-hosted application that
+ * gates /admin, /api/posts*, and /api/scenes/* (all methods).
  *
  *   node scripts/setup-access.mjs
  *
- * Reads CF_ACCESS_API_TOKEN from .env. Idempotent: if an app with the
- * same name already exists, it is reused (no duplicate created). Each
- * app's AUD is captured; if all three match we write a single AUD into
- * wrangler.toml — otherwise we error so the caller can decide what to do.
+ * ONE app, not three: the canvas editor PUTs scenes via `fetch()` from
+ * /wip/<slug>/?edit. When Access challenges that request, it 302s to the
+ * login page on the team's *.cloudflareaccess.com origin — a CORS-mode
+ * fetch can't follow a cross-origin redirect without CORS headers on the
+ * login page (and there aren't any). Splitting protected paths into
+ * separate Access apps means separate session cookies, so even an already-
+ * logged-in /admin user gets the challenge on /api/scenes/* and the fetch
+ * blows up. One app → one cookie → no fresh challenge on the PUT path.
  *
- * Required token permissions:
- *   Account · Access: Apps and Policies · Edit
- *
- * The Allow policy grants ADMIN_EMAILS (default n@nvdk.co). The default
- * One-time PIN identity provider is used (Cloudflare provides it without
- * explicit creation when no other IdP is attached).
+ * The script tears down any previous "nvdk admin / nvdk posts api / nvdk
+ * scenes write" apps before creating the consolidated one. AUDs are
+ * written back into wrangler.toml. Idempotent on re-run.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const ACCOUNT_ID = '123440327a67db0da0c8f99fa3394777';
 const ADMIN_EMAIL = 'n@nvdk.co';
-const SESSION = '720h'; // 30 days
+const SESSION = '24h';
+
+const OLD_APP_NAMES = ['nvdk admin', 'nvdk posts api', 'nvdk scenes write'];
+
+const CONSOLIDATED = {
+  name: 'nvdk authoring',
+  type: 'self_hosted',
+  session_duration: SESSION,
+  app_launcher_visible: false,
+  auto_redirect_to_identity: false,
+  self_hosted_domains: [
+    'nvdk.co/admin',
+    'nvdk.co/admin/*',
+    'nvdk.co/api/posts',
+    'nvdk.co/api/posts/*',
+    'nvdk.co/api/scenes/*',
+  ],
+};
 
 const env = Object.fromEntries(
   readFileSync('.env', 'utf8')
@@ -52,92 +70,54 @@ async function cf(method, path, body) {
   return j.result;
 }
 
-const APPS = [
-  {
-    name: 'nvdk admin',
-    self_hosted_domains: ['nvdk.co/admin', 'nvdk.co/admin/*'],
-  },
-  {
-    name: 'nvdk posts api',
-    self_hosted_domains: ['nvdk.co/api/posts', 'nvdk.co/api/posts/*'],
-  },
-  {
-    // GET /api/scenes/* stays public; we only require auth on writes.
-    name: 'nvdk scenes write',
-    self_hosted_domains: ['nvdk.co/api/scenes/*'],
-    http_only_cookie_attribute: false,
-    // Method-scoped: only these methods trigger Access.
-    allowed_request_methods: ['PUT', 'POST', 'DELETE'],
-  },
-];
-
 console.log('Loading existing apps…');
 const existing = await cf('GET', '/apps');
 const byName = new Map(existing.map((a) => [a.name, a]));
 
-const results = [];
-for (const spec of APPS) {
-  const found = byName.get(spec.name);
-  let app;
-  if (found) {
-    console.log(`  · ${spec.name} already exists (${found.id})`);
-    app = found;
-  } else {
-    console.log(`  + creating ${spec.name}…`);
-    app = await cf('POST', '/apps', {
-      type: 'self_hosted',
-      session_duration: SESSION,
-      app_launcher_visible: false,
-      auto_redirect_to_identity: false,
-      ...spec,
-    });
-    console.log(`    created ${app.id}`);
-  }
-  results.push(app);
-
-  // Ensure an Allow policy exists for this app.
-  const policies = await cf('GET', `/apps/${app.id}/policies`);
-  if (!policies.length) {
-    console.log(`    + adding allow policy for ${ADMIN_EMAIL}`);
-    await cf('POST', `/apps/${app.id}/policies`, {
-      name: 'allow admin',
-      decision: 'allow',
-      precedence: 1,
-      include: [{ email: { email: ADMIN_EMAIL } }],
-    });
-  } else {
-    console.log(`    · policy already present (${policies.length})`);
-  }
+// Tear down stale split apps first so paths don't conflict.
+for (const oldName of OLD_APP_NAMES) {
+  const found = byName.get(oldName);
+  if (!found) continue;
+  console.log(`  - deleting stale app ${oldName} (${found.id})`);
+  await cf('DELETE', `/apps/${found.id}`);
+  byName.delete(oldName);
 }
 
-console.log('\nAUDs:');
-for (const a of results) console.log(`  ${a.name.padEnd(20)} ${a.aud}`);
-
-const auds = results.map((a) => a.aud);
-const uniq = [...new Set(auds)];
-console.log(`\n${uniq.length} unique AUD(s):`, uniq);
-
-if (uniq.length !== 1) {
-  console.log(
-    '\nMultiple AUDs — leaving wrangler.toml alone. ' +
-      'Update CF_ACCESS_AUD manually, or extend src/lib/auth.ts to accept a comma list.',
-  );
-  process.exit(0);
+// Create or reuse the consolidated app.
+let app = byName.get(CONSOLIDATED.name);
+if (app) {
+  console.log(`  · ${CONSOLIDATED.name} already exists (${app.id})`);
+} else {
+  console.log(`  + creating ${CONSOLIDATED.name}…`);
+  app = await cf('POST', '/apps', CONSOLIDATED);
+  console.log(`    created ${app.id}`);
 }
 
-// Patch wrangler.toml CF_ACCESS_AUD line.
-const aud = uniq[0];
+// Ensure Allow policy.
+const policies = await cf('GET', `/apps/${app.id}/policies`);
+if (!policies.length) {
+  console.log(`    + adding allow policy for ${ADMIN_EMAIL}`);
+  await cf('POST', `/apps/${app.id}/policies`, {
+    name: 'allow admin',
+    decision: 'allow',
+    precedence: 1,
+    include: [{ email: { email: ADMIN_EMAIL } }],
+  });
+} else {
+  console.log(`    · policy already present (${policies.length})`);
+}
+
+console.log(`\nAUD: ${app.aud}\n`);
+
+// Patch wrangler.toml.
 const TOML_PATH = 'wrangler.toml';
-let toml = readFileSync(TOML_PATH, 'utf8');
-const newToml = toml.replace(
-  /^CF_ACCESS_AUD\s*=\s*".*"$/m,
-  `CF_ACCESS_AUD = "${aud}"`,
-);
+const toml = readFileSync(TOML_PATH, 'utf8');
+const newToml = toml.replace(/^CF_ACCESS_AUD\s*=\s*".*"$/m, `CF_ACCESS_AUD = "${app.aud}"`);
 if (newToml === toml) {
   console.warn('wrangler.toml had no CF_ACCESS_AUD line to replace — add it manually.');
 } else {
   writeFileSync(TOML_PATH, newToml);
-  console.log(`\n✓ wrote CF_ACCESS_AUD = "${aud}" to wrangler.toml`);
+  console.log(`✓ wrote CF_ACCESS_AUD = "${app.aud}" to wrangler.toml`);
 }
 
 console.log('\nRedeploy: npm run deploy');
