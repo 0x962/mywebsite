@@ -17,7 +17,11 @@
  *   ---
  *   <ExcalidrawPost slug="<slug>" />
  */
+import '../../styles/global.css';
+import '@fontsource/caveat/400.css';
+import '@fontsource/caveat/600.css';
 import { getEntry } from 'astro:content';
+import TopBar from '../TopBar.astro';
 import ExcalidrawCanvas from './ExcalidrawCanvas.tsx';
 
 interface Props {
@@ -82,26 +86,17 @@ const blogPostingLd = {
         height: 100%;
         background: #0a0a0b;
       }
-      .ex-home-link {
+      /* Push the canvas below the site topbar so Excalidraw's own toolbar
+         doesn't fight with it. ExcalidrawCanvas uses `position: fixed`
+         inside; the global CSS rule below moves its top edge. */
+      .excalidraw-stage {
         position: fixed;
-        top: 14px;
-        right: 16px;
-        z-index: 5;
-        font: 13px/1 'JetBrains Mono', ui-monospace, monospace;
-        color: #d4d4d8;
-        text-decoration: none;
-        background: rgba(15, 15, 16, 0.85);
-        border: 1px solid #27272a;
-        border-radius: 6px;
-        padding: 7px 10px;
-      }
-      .ex-home-link:hover {
-        color: #fff;
-        border-color: #3b82f6;
+        top: var(--topbar-height, 56px);
+        left: 0; right: 0; bottom: 0;
       }
       .ex-edited {
         position: fixed;
-        top: 14px;
+        top: calc(var(--topbar-height, 56px) + 12px);
         left: 16px;
         z-index: 5;
         font: 11px/1 'JetBrains Mono', ui-monospace, monospace;
@@ -117,7 +112,7 @@ const blogPostingLd = {
     </style>
   </head>
   <body>
-    <a class="ex-home-link" href="/">← nvdk.co</a>
+    <TopBar />
     <span class="ex-edited" data-slug={slug}></span>
     <ExcalidrawCanvas client:only="react" slug={slug} />
     <script is:inline define:vars={{ slug }}>

@@ -6,6 +6,10 @@
  */
 export const prerender = false;
 
+import '../../styles/global.css';
+import '@fontsource/caveat/400.css';
+import '@fontsource/caveat/600.css';
+import TopBar from '../../components/TopBar.astro';
 import ExcalidrawCanvas from '../../components/excalidraw/ExcalidrawCanvas.tsx';
 import { readPostMeta, isSlug } from '../../lib/scenes';
 
@@ -39,16 +43,15 @@ const pageTitle = `${meta.title} — Navid Khan`;
     <meta property="og:image" content={ogImage.toString()} />
     <style>
       html, body { margin: 0; height: 100%; background: #0a0a0b; }
-      .ex-home-link {
-        position: fixed; top: 14px; right: 16px; z-index: 5;
-        font: 13px/1 'JetBrains Mono', ui-monospace, monospace;
-        color: #d4d4d8; text-decoration: none;
-        background: rgba(15, 15, 16, 0.85);
-        border: 1px solid #27272a; border-radius: 6px; padding: 7px 10px;
+      .excalidraw-stage {
+        position: fixed;
+        top: var(--topbar-height, 56px);
+        left: 0; right: 0; bottom: 0;
       }
-      .ex-home-link:hover { color: #fff; border-color: #3b82f6; }
       .ex-edited {
-        position: fixed; top: 14px; left: 16px; z-index: 5;
+        position: fixed;
+        top: calc(var(--topbar-height, 56px) + 12px);
+        left: 16px; z-index: 5;
         font: 11px/1 'JetBrains Mono', ui-monospace, monospace;
         color: #71717a; background: rgba(15, 15, 16, 0.65);
         border: 1px solid #27272a; border-radius: 6px; padding: 6px 9px;
@@ -58,7 +61,7 @@ const pageTitle = `${meta.title} — Navid Khan`;
     </style>
   </head>
   <body>
-    <a class="ex-home-link" href="/">← nvdk.co</a>
+    <TopBar />
     <span class="ex-edited" data-slug={slug}></span>
     <ExcalidrawCanvas client:only="react" slug={slug} />
     <script is:inline define:vars={{ slug }}>

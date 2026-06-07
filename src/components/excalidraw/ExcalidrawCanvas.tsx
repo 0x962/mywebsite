@@ -1,6 +1,7 @@
 import { Excalidraw, serializeAsJSON } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DEFAULT_LIBRARY_ITEMS } from "../../lib/excalidraw-libs";
 
 type Theme = "light" | "dark";
 
@@ -137,9 +138,8 @@ export default function ExcalidrawCanvas({
   if (!scene) {
     return (
       <div
+        className="excalidraw-stage"
         style={{
-          position: "fixed",
-          inset: 0,
           display: "grid",
           placeItems: "center",
           background: "#0a0a0b",
@@ -153,10 +153,10 @@ export default function ExcalidrawCanvas({
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0 }}>
+    <div className="excalidraw-stage">
       {!isEditable && <style>{`.main-menu-trigger { display: none !important; }`}</style>}
       <Excalidraw
-        initialData={scene}
+        initialData={{ ...scene, libraryItems: DEFAULT_LIBRARY_ITEMS }}
         theme={theme}
         viewModeEnabled={!isEditable}
         onChange={isEditable ? onChange : undefined}
