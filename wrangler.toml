@@ -3,11 +3,21 @@ compatibility_date = "2025-06-07"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
 
-# Authoring: who is allowed to write/create posts. Read-only API endpoints
-# (GET /api/scenes/...) are public; everything else requires a request with
-# `Cf-Access-Authenticated-User-Email` matching this allowlist.
+# Authoring: who can write/create posts. Read-only API endpoints
+# (GET /api/scenes/...) are public; writes require a verified Cloudflare
+# Access JWT (`Cf-Access-Jwt-Assertion`) whose `email` claim is in this list
+# and whose `aud` matches CF_ACCESS_AUD.
+#
+# CF_ACCESS_TEAM_DOMAIN: subdomain only — for "nvdk.cloudflareaccess.com",
+#   set "nvdk". Get it from the Zero Trust dashboard.
+# CF_ACCESS_AUD: per-application AUD tag from the Access app overview.
+#   Set via `wrangler pages secret put CF_ACCESS_AUD --project-name=nvdk`
+#   after creating the Access apps, OR set it here once it's not sensitive
+#   (AUD tags are not secrets; they're domain-scoped identifiers).
 [vars]
 ADMIN_EMAILS = "n@nvdk.co"
+CF_ACCESS_TEAM_DOMAIN = ""
+CF_ACCESS_AUD = ""
 
 # Scene storage. KV value is the Excalidraw scene JSON for slug "<slug>",
 # stored under key "scene:<slug>". Post metadata for posts created online

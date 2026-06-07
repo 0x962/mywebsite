@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
 export const PUT: APIRoute = async ({ params, request, locals }) => {
   if (!isSlug(params.slug)) return json({ error: 'bad slug' }, 400);
   const e = env(locals);
-  const denied = requireAdmin(request, e);
+  const denied = await requireAdmin(request, e);
   if (denied) return denied;
 
   let body: unknown;

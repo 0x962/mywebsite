@@ -13,7 +13,7 @@ import { requireAdmin } from '../../lib/auth';
 import { listPostSlugs, readPostMeta } from '../../lib/scenes';
 
 const env = Astro.locals.runtime.env;
-const denied = requireAdmin(Astro.request, env);
+const denied = await requireAdmin(Astro.request, env);
 if (denied) return denied;
 
 const collectionPosts = (await getCollection('posts')).map((p) => ({

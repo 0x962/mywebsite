@@ -30,7 +30,7 @@ function env(locals: App.Locals): RuntimeEnv {
 // admin page directly via getCollection — they don't appear here.
 export const GET: APIRoute = async ({ request, locals }) => {
   const e = env(locals);
-  const denied = requireAdmin(request, e);
+  const denied = await requireAdmin(request, e);
   if (denied) return denied;
 
   const slugs = await listPostSlugs(e.SCENES);
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 // scene and stores metadata. Idempotent on slug collision (409).
 export const POST: APIRoute = async ({ request, locals }) => {
   const e = env(locals);
-  const denied = requireAdmin(request, e);
+  const denied = await requireAdmin(request, e);
   if (denied) return denied;
 
   let body: unknown;
