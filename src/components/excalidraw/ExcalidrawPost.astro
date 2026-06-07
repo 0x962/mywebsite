@@ -86,22 +86,21 @@ const blogPostingLd = {
         height: 100%;
         background: #0a0a0b;
       }
-      /* On canvas pages the topbar lives at the BOTTOM so it doesn't fight
-         Excalidraw's hamburger / shape toolbar / library panel along the top
-         edge. Both rules use :global() because the topbar markup is rendered
-         by TopBar.astro (its own scope) and the stage by the React island
-         (no scope at all). */
-      :global(.topbar) {
-        top: auto;
-        bottom: 0;
-        border-top: 1px solid var(--border-color);
-        border-bottom: 0;
-      }
+      /* Canvas sits below the site topbar (which stays at top, where it
+         is on every other page). :global() because the canvas div is
+         rendered by the React island and never gets Astro's scoping
+         data-attribute. */
       :global(.excalidraw-stage) {
         position: fixed;
-        top: 0;
-        left: 0; right: 0;
-        bottom: var(--topbar-height, 56px);
+        top: var(--topbar-height, 56px);
+        left: 0; right: 0; bottom: 0;
+      }
+      /* Move Excalidraw's own top toolbar (hamburger + shape strip + library
+         toggle, all inside `.FixedSideContainer_side_top`) to the BOTTOM of
+         the canvas so its buttons don't cover the drawing along the top edge. */
+      :global(.excalidraw .FixedSideContainer_side_top) {
+        top: auto !important;
+        bottom: 0 !important;
       }
     </style>
   </head>
