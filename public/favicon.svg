@@ -1,11 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <text
-    x="32" y="50"
+    x="32" y="46"
     text-anchor="middle"
-    font-family="'IBM Plex Serif', Georgia, ui-serif, serif"
-    font-size="60"
-    font-style="italic"
+    font-family="'Caveat', 'Bradley Hand', 'Comic Sans MS', cursive"
+    font-size="44"
     font-weight="600"
     fill="#3b82f6"
-  >n</text>
+  >wip</text>
 </svg>

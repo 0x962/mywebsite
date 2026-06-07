@@ -66,7 +66,6 @@ const pageTitle = `${meta.title} — Navid Khan — WIP`;
     <ExcalidrawCanvas client:only="react" slug={slug} />
     <script is:inline define:vars={{ slug }}>
       (async () => {
-        if (new URLSearchParams(location.search).has('edit')) return;
         const el = document.querySelector(`.ex-edited[data-slug="${slug}"]`);
         if (!el) return;
         try {

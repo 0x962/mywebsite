@@ -116,10 +116,8 @@ const blogPostingLd = {
     <span class="ex-edited" data-slug={slug}></span>
     <ExcalidrawCanvas client:only="react" slug={slug} />
     <script is:inline define:vars={{ slug }}>
-      // Show "edited X ago" overlay (skipped while ?edit, since the canvas
-      // pill already shows live save status). Failure is silent.
+      // Show "edited X ago" overlay near the topbar. Failure is silent.
       (async () => {
-        if (new URLSearchParams(location.search).has('edit')) return;
         const el = document.querySelector(`.ex-edited[data-slug="${slug}"]`);
         if (!el) return;
         try {

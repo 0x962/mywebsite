@@ -6,38 +6,29 @@ import { DEFAULT_LIBRARY_ITEMS } from "../../lib/excalidraw-libs";
 type Theme = "light" | "dark";
 
 /**
- * Excalidraw canvas island. Renders the vendored-from-source Excalidraw editor.
+ * Excalidraw canvas island. ONE mode for everyone — the canvas is always
+ * fully editable. Autosave attempts hit `PUT /api/scenes/<slug>`:
  *
- *   • editable=false (default detect: ?edit in URL) → read-only canvas. The
- *     host controls this via prop; the live write endpoint is auth-gated by
- *     Cloudflare Access regardless, so visitors cannot edit even if they add
- *     ?edit themselves.
- *   • Scene loads on mount from `GET /api/scenes/<slug>` (KV-backed). When
- *     editing, every debounced change is serialized via Excalidraw's
- *     `serializeAsJSON` and PUT back to the same endpoint.
- *   • `initialData` prop is still supported (legacy callers can preload), but
- *     the default flow is to leave it null and let the canvas fetch.
+ *   • Admin (Access JWT cookie present) → write succeeds, scene persists.
+ *   • Anyone else → write 401s; we show a small "local-only" banner and
+ *     stop retrying for the session. The visitor can keep editing in their
+ *     browser and use Excalidraw's hamburger menu → "Save to disk" to grab
+ *     a .excalidraw file.
  *
- * Mounted as `client:only="react"` — Excalidraw is browser-only (canvas, workers).
+ * Mounted as `client:only="react"` — Excalidraw is browser-only.
  */
 interface Props {
-  /** A pre-loaded Excalidraw scene; when omitted, fetched from /api/scenes/<slug>. */
+  /** A pre-loaded Excalidraw scene; when omitted, fetched from /data/scenes/<slug>. */
   initialData?: Record<string, unknown> | null;
-  /** Post slug — both the API key (KV "scene:<slug>") and the save target. */
+  /** Post slug — both the API key and the save target. */
   slug?: string;
-  /**
-   * Force edit/read mode. When omitted, edit mode = `?edit` in the URL on the
-   * client. (Detection happens client-side because static pages strip
-   * searchParams at build.) Production writes are still gated by Access.
-   */
-  editable?: boolean;
   /** UI + canvas theme. Defaults to dark to match the site. */
   theme?: Theme;
 }
 
 const SAVE_DEBOUNCE_MS = 800;
-const READ_BASE = "/data/scenes/";    // public GET (outside Access)
-const WRITE_BASE = "/api/scenes/";    // PUT, Access-gated
+const READ_BASE = "/data/scenes/";
+const WRITE_BASE = "/api/scenes/";
 
 function validateEmbeddable(url: string): boolean {
   try {
@@ -62,28 +53,15 @@ function renderEmbeddable(element: { link?: string | null }) {
   );
 }
 
-function detectEditable(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).has("edit")
-  );
-}
-
-export default function ExcalidrawCanvas({
-  initialData = null,
-  slug,
-  editable,
-  theme = "dark",
-}: Props) {
-  const isEditable = editable ?? detectEditable();
+export default function ExcalidrawCanvas({ initialData = null, slug, theme = "dark" }: Props) {
   const [scene, setScene] = useState<Record<string, unknown> | null>(initialData);
-  const [status, setStatus] = useState("");
+  const [loadError, setLoadError] = useState<string>("");
+  const [localOnly, setLocalOnly] = useState(false);
+  const [savingLabel, setSavingLabel] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Excalidraw fires onChange once on mount echoing the loaded scene. Skip that
-  // one so merely opening the page doesn't rewrite the scene file every load.
   const sawMountChange = useRef(false);
 
-  // Fetch the scene from KV on mount when no initialData was passed.
+  // Fetch the scene from KV on mount (always; visitors and admin both).
   useEffect(() => {
     if (initialData || !slug || scene) return;
     let cancelled = false;
@@ -94,20 +72,19 @@ export default function ExcalidrawCanvas({
         const data = await res.json();
         if (!cancelled) setScene(data);
       } catch (err) {
-        if (!cancelled) {
-          setStatus(`load failed: ${err}`);
-          setScene({ elements: [], appState: { viewBackgroundColor: "#ffffff" }, files: {} });
-        }
+        if (cancelled) return;
+        setLoadError(String(err));
+        setScene({ elements: [], appState: { viewBackgroundColor: "#ffffff" }, files: {} });
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [slug, initialData, scene]);
 
   const onChange = useCallback(
     (elements: any, appState: any, files: any) => {
-      if (!isEditable || !slug) return;
+      if (!slug || localOnly) return;
+      // Excalidraw fires onChange once on mount echoing the loaded scene.
+      // Skip that first one so opening the page never rewrites the file.
       if (!sawMountChange.current) {
         sawMountChange.current = true;
         return;
@@ -115,24 +92,30 @@ export default function ExcalidrawCanvas({
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(async () => {
         const sceneJson = serializeAsJSON(elements, appState, files, "local");
-        setStatus("saving…");
+        setSavingLabel("saving…");
         try {
           const res = await fetch(WRITE_BASE + encodeURIComponent(slug), {
             method: "PUT",
             headers: { "content-type": "application/json" },
             body: sceneJson,
+            redirect: "manual", // Don't follow Access's cross-origin login redirect (CORS-blocks anyway).
           });
-          if (res.status === 401) {
-            setStatus("unauthorized — sign in");
+          if (res.ok) {
+            setSavingLabel("saved");
+            setTimeout(() => setSavingLabel(""), 1200);
             return;
           }
-          setStatus(res.ok ? `saved ${slug}` : `save failed: ${await res.text()}`);
-        } catch (err) {
-          setStatus(`save failed: ${err}`);
+          // Anything non-2xx (401, 403, opaqueredirect, etc.) → not authed.
+          setLocalOnly(true);
+          setSavingLabel("");
+        } catch {
+          // Network error / CORS / opaqueredirect — treat as not authed.
+          setLocalOnly(true);
+          setSavingLabel("");
         }
       }, SAVE_DEBOUNCE_MS);
     },
-    [isEditable, slug],
+    [slug, localOnly],
   );
 
   if (!scene) {
@@ -154,36 +137,41 @@ export default function ExcalidrawCanvas({
 
   return (
     <div className="excalidraw-stage">
-      {!isEditable && <style>{`.main-menu-trigger { display: none !important; }`}</style>}
       <Excalidraw
-        // `scrollToContent: true` auto-fits the viewport on mount so visitors
-        // land on the actual content instead of an empty top-left corner.
-        // Without it, scenes whose elements live far from (0,0) (anything an
-        // editor panned away from origin) render as a blank canvas in view mode.
+        // scrollToContent auto-fits the viewport to existing elements on mount,
+        // so visitors land on the actual drawing instead of an empty corner.
         initialData={{ ...scene, libraryItems: DEFAULT_LIBRARY_ITEMS, scrollToContent: true }}
         theme={theme}
-        viewModeEnabled={!isEditable}
-        onChange={isEditable ? onChange : undefined}
+        onChange={slug ? onChange : undefined}
         validateEmbeddable={validateEmbeddable}
         renderEmbeddable={renderEmbeddable}
       />
-      {isEditable && (
+      {(localOnly || savingLabel || loadError) && (
         <div
           style={{
             position: "fixed",
             left: 16,
             bottom: 16,
             zIndex: 100000,
-            font: "11px var(--font-mono, monospace)",
+            maxWidth: 360,
+            font: "11px/1.4 ui-monospace, 'JetBrains Mono', monospace",
             color: "#d4d4d8",
-            background: "rgba(10,10,11,0.92)",
+            background: "rgba(10, 10, 11, 0.92)",
             border: "1px solid #27272a",
             borderRadius: 6,
-            padding: "6px 9px",
+            padding: "8px 11px",
             pointerEvents: "none",
+            letterSpacing: "0.01em",
           }}
         >
-          {status || `editing ${slug ?? "(no slug)"}`}
+          {loadError && <div style={{ color: "#f87171" }}>load failed: {loadError}</div>}
+          {localOnly && (
+            <div>
+              edits stay in your browser only. sign in at <span style={{ color: "#60a5fa" }}>/admin</span> to
+              persist — or use the hamburger menu → <em>Save to…</em> to download.
+            </div>
+          )}
+          {!localOnly && savingLabel && <div>{savingLabel}</div>}
         </div>
       )}
     </div>
