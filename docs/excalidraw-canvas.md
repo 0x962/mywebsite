@@ -37,6 +37,9 @@ upstream by bumping the submodule.
    ```json
    { "type": "excalidraw", "version": 2, "source": "nvdk.co", "elements": [], "appState": { "viewBackgroundColor": "#ffffff" }, "files": {} }
    ```
+   The canvas renders dark via Excalidraw's dark theme, which **inverts** colors
+   (`invert(93%)`) — so keep `viewBackgroundColor` light (`#ffffff` → ~`#121212`
+   on screen). The theme is set in `ExcalidrawCanvas.tsx` (`theme="dark"`).
 3. Add a thin page `src/pages/wip/<slug>.astro`:
    ```astro
    ---

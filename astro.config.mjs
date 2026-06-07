@@ -37,6 +37,13 @@ export default defineConfig({
       ],
       dedupe: ['react', 'react-dom'],
     },
-    server: { fs: { strict: false }, allowedHosts: ['.trycloudflare.com'] },
+    server: {
+      fs: { strict: false },
+      allowedHosts: ['.trycloudflare.com'],
+      // The canvas editor autosaves scenes here; without this, each save would
+      // invalidate the page's static JSON import and trigger a full reload —
+      // a save→reload→remount→save loop that makes editing impossible.
+      watch: { ignored: ['**/src/data/scenes/**'] },
+    },
   },
 });

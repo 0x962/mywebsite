@@ -2,6 +2,8 @@ import { Excalidraw, serializeAsJSON } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { useCallback, useRef, useState } from "react";
 
+type Theme = "light" | "dark";
+
 /**
  * Excalidraw canvas island. Renders the vendored-from-source Excalidraw editor.
  *
@@ -26,6 +28,8 @@ interface Props {
    * the production bundle, so this can never enable editing for visitors.)
    */
   editable?: boolean;
+  /** UI + canvas theme. Defaults to dark to match the site. */
+  theme?: Theme;
 }
 
 const SAVE_DEBOUNCE_MS = 800;
@@ -73,14 +77,21 @@ function detectEditable(): boolean {
   );
 }
 
-export default function ExcalidrawCanvas({ initialData = null, slug, editable }: Props) {
+export default function ExcalidrawCanvas({ initialData = null, slug, editable, theme = "dark" }: Props) {
   const isEditable = editable ?? detectEditable();
   const [status, setStatus] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Excalidraw fires onChange once on mount echoing the loaded scene. Skip that
+  // one so merely opening the page doesn't rewrite the scene file every load.
+  const sawMountChange = useRef(false);
 
   const onChange = useCallback(
     (elements: any, appState: any, files: any) => {
       if (!isEditable || !slug) return;
+      if (!sawMountChange.current) {
+        sawMountChange.current = true;
+        return;
+      }
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(async () => {
         const json = serializeAsJSON(elements, appState, files, "local");
@@ -104,6 +115,7 @@ export default function ExcalidrawCanvas({ initialData = null, slug, editable }:
     <div style={{ position: "fixed", inset: 0 }}>
       <Excalidraw
         initialData={initialData}
+        theme={theme}
         viewModeEnabled={!isEditable}
         onChange={isEditable ? onChange : undefined}
         validateEmbeddable={validateEmbeddable}

@@ -82,6 +82,8 @@ const blogPostingLd = {
       body {
         margin: 0;
         height: 100%;
+        /* Match the site so there's no white flash before the canvas mounts. */
+        background: #0a0a0b;
       }
       .ex-home-link {
         position: fixed;
@@ -89,15 +91,16 @@ const blogPostingLd = {
         right: 16px;
         z-index: 5;
         font: 13px/1 'JetBrains Mono', ui-monospace, monospace;
-        color: #1e1e1e;
+        color: #d4d4d8;
         text-decoration: none;
-        background: rgba(255, 255, 255, 0.85);
-        border: 1px solid #d6d6d6;
+        background: rgba(15, 15, 16, 0.85);
+        border: 1px solid #27272a;
         border-radius: 6px;
         padding: 7px 10px;
       }
       .ex-home-link:hover {
-        background: #fff;
+        color: #fff;
+        border-color: #3b82f6;
       }
     </style>
   </head>
