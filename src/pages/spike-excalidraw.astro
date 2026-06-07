@@ -1,0 +1,30 @@
+---
+/**
+ * Milestone-1 spike: prove the vendored-from-source Excalidraw mounts in Astro
+ * and renders a saved scene read-only. Throwaway — delete once M1 is signed off.
+ *
+ * ?edit (DEV only) drops view mode so we can confirm the full editor mounts too.
+ */
+import scene from '../data/scenes/spike.json';
+import ExcalidrawCanvas from '../components/excalidraw/ExcalidrawCanvas.tsx';
+
+const editable = import.meta.env.DEV && Astro.url.searchParams.has('edit');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Excalidraw spike</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <ExcalidrawCanvas client:only="react" initialData={scene} viewMode={!editable} />
+  </body>
+</html>

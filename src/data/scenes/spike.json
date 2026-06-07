@@ -1,0 +1,31 @@
+{
+  "elements": [
+    {
+      "type": "rectangle",
+      "id": "spike-rect",
+      "x": 220,
+      "y": 160,
+      "width": 320,
+      "height": 160,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "roughness": 1
+    },
+    {
+      "type": "text",
+      "id": "spike-text",
+      "x": 250,
+      "y": 220,
+      "width": 260,
+      "height": 40,
+      "text": "Excalidraw from source ✓",
+      "fontSize": 20,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#fefefe"
+  }
+}

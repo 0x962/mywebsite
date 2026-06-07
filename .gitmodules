@@ -1,0 +1,3 @@
+[submodule "vendor/excalidraw"]
+	path = vendor/excalidraw
+	url = git@github.com:0x962/excalidraw.git
