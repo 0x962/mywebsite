@@ -70,15 +70,21 @@ const liveCount = (elements: unknown): number => {
 };
 
 /**
- * Compute Excalidraw scrollX/scrollY so the scene's top-left corner lands
- * at viewport (PADDING, PADDING) on mount — instead of `scrollToContent`,
- * which CENTERS the bounding box (looks like content starts mid-screen).
+ * Compute Excalidraw scrollX/scrollY for an initial top-left framing.
  *
- * Excalidraw's scroll convention: viewport_x = element_x + scrollX, so to put
- * an element at viewport x = PADDING we need scrollX = PADDING − element_x.
+ * Excalidraw's transform (from packages/common/src/utils.ts):
+ *   screenX = (sceneX + scrollX) * zoom + offsetLeft
+ *
+ * So to land the scene's leftmost element at viewport x = PADDING:
+ *   scrollX = PADDING/zoom - minX   (same for Y)
  */
 const PADDING = 40;
-const topLeftScroll = (elements: unknown): { scrollX: number; scrollY: number } | null => {
+const INITIAL_ZOOM = 0.25;
+
+const initialFraming = (
+  elements: unknown,
+  zoom: number,
+): { scrollX: number; scrollY: number } | null => {
   if (!Array.isArray(elements) || elements.length === 0) return null;
   let minX = Infinity, minY = Infinity, any = false;
   for (const el of elements) {
@@ -90,7 +96,7 @@ const topLeftScroll = (elements: unknown): { scrollX: number; scrollY: number } 
     any = true;
   }
   if (!any) return null;
-  return { scrollX: PADDING - minX, scrollY: PADDING - minY };
+  return { scrollX: PADDING / zoom - minX, scrollY: PADDING / zoom - minY };
 };
 
 export default function ExcalidrawCanvas({ initialData = null, slug, theme = "dark" }: Props) {
@@ -210,12 +216,16 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
     );
   }
 
-  const scroll = topLeftScroll((scene as { elements?: unknown }).elements);
+  const framing = initialFraming((scene as { elements?: unknown }).elements, INITIAL_ZOOM);
   const sceneAppState = (scene as { appState?: Record<string, unknown> }).appState ?? {};
   const initial: Record<string, unknown> = {
     ...scene,
     libraryItems: DEFAULT_LIBRARY_ITEMS,
-    appState: scroll ? { ...sceneAppState, scrollX: scroll.scrollX, scrollY: scroll.scrollY } : sceneAppState,
+    appState: {
+      ...sceneAppState,
+      zoom: { value: INITIAL_ZOOM },
+      ...(framing ?? {}),
+    },
   };
 
   return (
