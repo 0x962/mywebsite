@@ -1,0 +1,32 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "test",
+  "elements": [
+    {
+      "type": "text",
+      "id": "wd-label",
+      "x": 120,
+      "y": 90,
+      "width": 360,
+      "height": 25,
+      "text": "embeddable widget below — should be live:",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "embeddable",
+      "id": "wd-embed",
+      "x": 120,
+      "y": 130,
+      "width": 360,
+      "height": 200,
+      "link": "http://localhost:4321/widgets/demo"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#fefefe"
+  },
+  "files": {}
+}

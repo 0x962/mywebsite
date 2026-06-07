@@ -30,6 +30,41 @@ interface Props {
 
 const SAVE_DEBOUNCE_MS = 800;
 
+/**
+ * Allow only same-origin /widgets/ URLs to render as live embeddables. Excalidraw
+ * blocks any embeddable URL this rejects, so visitors can't be served arbitrary
+ * iframes via a tampered scene file.
+ */
+function validateEmbeddable(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.origin);
+    return u.origin === window.location.origin && u.pathname.startsWith("/widgets/");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Render our own iframe for validated /widgets/ embeddables, with
+ * `allow-same-origin allow-scripts` so the (same-origin) widget can load its
+ * Astro hydration scripts and run live. Excalidraw's default embeddable sandbox
+ * omits allow-same-origin → null origin → blocked scripts. Returning null for
+ * anything else falls back to that locked-down default.
+ */
+function renderEmbeddable(element: { link?: string | null }) {
+  const url = element.link;
+  if (!url || !validateEmbeddable(url)) return null;
+  return (
+    <iframe
+      title="widget"
+      src={url}
+      style={{ width: "100%", height: "100%", border: 0 }}
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+      allow="clipboard-write"
+    />
+  );
+}
+
 function detectEditable(): boolean {
   return (
     import.meta.env.DEV &&
@@ -71,6 +106,8 @@ export default function ExcalidrawCanvas({ initialData = null, slug, editable }:
         initialData={initialData}
         viewModeEnabled={!isEditable}
         onChange={isEditable ? onChange : undefined}
+        validateEmbeddable={validateEmbeddable}
+        renderEmbeddable={renderEmbeddable}
       />
       {isEditable && (
         <div

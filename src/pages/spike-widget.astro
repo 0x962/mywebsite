@@ -1,0 +1,26 @@
+---
+/**
+ * M3 spike: prove an Excalidraw `embeddable` element renders a live, interactive
+ * /widgets/<name> route inside the read-only canvas. Throwaway.
+ */
+import scene from '../data/scenes/widget-demo.json';
+import ExcalidrawCanvas from '../components/excalidraw/ExcalidrawCanvas.tsx';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Widget embeddable spike</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <ExcalidrawCanvas client:only="react" initialData={scene} slug="widget-demo" />
+  </body>
+</html>
