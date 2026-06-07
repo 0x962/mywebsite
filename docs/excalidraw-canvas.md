@@ -48,9 +48,9 @@ upstream by bumping the submodule.
    ---
    <ExcalidrawPost slug="<slug>" scene={scene} />
    ```
-4. Add `<slug>` to the `CANVAS_PAGES` set in `src/pages/wip/[...slug].astro` so
-   the generic markdown renderer skips it.
-5. `npm run dev`, open `/wip/<slug>/?edit`, draw. It autosaves to the scene JSON.
+   (Every post is its own dedicated `.astro` page — there is no generic
+   markdown renderer anymore; all posts are Excalidraw canvases.)
+4. `npm run dev`, open `/wip/<slug>/?edit`, draw. It autosaves to the scene JSON.
    Commit the JSON + `npm run deploy`.
 
 ## Live widgets
@@ -73,4 +73,9 @@ Interactive widgets live as same-origin embeddables:
 - `src/dev/scene-save-plugin.mjs` — dev-only `POST /__canvas/scene` writer
 - `src/data/scenes/<slug>.json` — saved scenes
 - `src/pages/widgets/` — chrome-less widget routes
-- old `<Place>`/`<Canvas>` plot page preserved at `src/_legacy/plot-place-canvas.astro`
+- `src/pages/wip/<slug>.astro` — one dedicated page per canvas post
+
+Home and the About page still use the older `src/components/canvas/` `<Place>`/
+`<Canvas>` system; only blog posts are Excalidraw. The markdown post pipeline
+(generic `[...slug]` renderer + marginalia components/scripts) was removed when
+all posts migrated to Excalidraw — recover from git history if ever needed.
