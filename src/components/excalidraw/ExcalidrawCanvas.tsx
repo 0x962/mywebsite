@@ -113,6 +113,8 @@ export default function ExcalidrawCanvas({ initialData = null, slug, editable, t
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
+      {/* Read-only visitors don't need the hamburger menu (export/reset/etc.). */}
+      {!isEditable && <style>{`.main-menu-trigger { display: none !important; }`}</style>}
       <Excalidraw
         initialData={initialData}
         theme={theme}

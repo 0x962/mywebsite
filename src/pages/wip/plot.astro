@@ -1,10 +1,9 @@
 ---
 /**
  * /wip/plot/ — the "Plot" post as an Excalidraw canvas. Metadata lives in the
- * posts collection (src/content/posts/plot.mdx); the scene lives in
- * src/data/scenes/plot.json. Author it locally with ?edit.
+ * posts collection (src/content/posts/plot.mdx); the scene is read from
+ * src/data/scenes/plot.json by ExcalidrawPost. Author it locally with ?edit.
  */
 import ExcalidrawPost from '../../components/excalidraw/ExcalidrawPost.astro';
-import scene from '../../data/scenes/plot.json';
 ---
-<ExcalidrawPost slug="plot" scene={scene} />
+<ExcalidrawPost slug="plot" />
