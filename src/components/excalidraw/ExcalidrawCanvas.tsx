@@ -69,6 +69,30 @@ const liveCount = (elements: unknown): number => {
   return n;
 };
 
+/**
+ * Compute Excalidraw scrollX/scrollY so the scene's top-left corner lands
+ * at viewport (PADDING, PADDING) on mount — instead of `scrollToContent`,
+ * which CENTERS the bounding box (looks like content starts mid-screen).
+ *
+ * Excalidraw's scroll convention: viewport_x = element_x + scrollX, so to put
+ * an element at viewport x = PADDING we need scrollX = PADDING − element_x.
+ */
+const PADDING = 40;
+const topLeftScroll = (elements: unknown): { scrollX: number; scrollY: number } | null => {
+  if (!Array.isArray(elements) || elements.length === 0) return null;
+  let minX = Infinity, minY = Infinity, any = false;
+  for (const el of elements) {
+    if (!el || typeof el !== "object") continue;
+    const e = el as { isDeleted?: boolean; x?: number; y?: number };
+    if (e.isDeleted) continue;
+    if (typeof e.x === "number" && e.x < minX) minX = e.x;
+    if (typeof e.y === "number" && e.y < minY) minY = e.y;
+    any = true;
+  }
+  if (!any) return null;
+  return { scrollX: PADDING - minX, scrollY: PADDING - minY };
+};
+
 export default function ExcalidrawCanvas({ initialData = null, slug, theme = "dark" }: Props) {
   const [scene, setScene] = useState<Record<string, unknown> | null>(initialData);
   const [loadError, setLoadError] = useState<string>("");
@@ -186,10 +210,18 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
     );
   }
 
+  const scroll = topLeftScroll((scene as { elements?: unknown }).elements);
+  const sceneAppState = (scene as { appState?: Record<string, unknown> }).appState ?? {};
+  const initial: Record<string, unknown> = {
+    ...scene,
+    libraryItems: DEFAULT_LIBRARY_ITEMS,
+    appState: scroll ? { ...sceneAppState, scrollX: scroll.scrollX, scrollY: scroll.scrollY } : sceneAppState,
+  };
+
   return (
     <div className="excalidraw-stage">
       <Excalidraw
-        initialData={{ ...scene, libraryItems: DEFAULT_LIBRARY_ITEMS, scrollToContent: true }}
+        initialData={initial}
         theme={theme}
         onChange={slug ? onChange : undefined}
         validateEmbeddable={validateEmbeddable}
