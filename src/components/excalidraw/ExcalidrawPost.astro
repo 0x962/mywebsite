@@ -2,22 +2,21 @@
 /**
  * Reusable page wrapper for an Excalidraw canvas post.
  *
- * Renders a full-screen Excalidraw canvas with proper SEO <head> (title,
- * description, OG, BlogPosting JSON-LD) pulled from the post's `posts`
- * collection entry — so the post still feeds home post-its + RSS — plus a small
- * "back to nvdk.co" link overlaid clear of Excalidraw's own UI.
+ * Renders a full-screen Excalidraw canvas with proper SEO <head> pulled from
+ * the post's `posts` collection entry (so the post still feeds home post-its
+ * and RSS) and a small "back to nvdk.co" link overlaid clear of Excalidraw's
+ * own UI. The scene itself is fetched client-side by ExcalidrawCanvas from
+ * `GET /api/scenes/<slug>` (KV-backed) — the page never embeds it.
  *
- * Read-only for visitors; the author edits locally via ?edit (see ExcalidrawCanvas).
+ * Read-only for visitors; the author edits with ?edit. Writes are gated by
+ * Cloudflare Access in production.
  *
- * Usage (one thin page per post). The scene is read from
- * src/data/scenes/<slug>.json by this component — the page just names the slug:
+ * Usage (one thin page per post):
  *   ---
  *   import ExcalidrawPost from '../../components/excalidraw/ExcalidrawPost.astro';
  *   ---
  *   <ExcalidrawPost slug="<slug>" />
  */
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { getEntry } from 'astro:content';
 import ExcalidrawCanvas from './ExcalidrawCanvas.tsx';
 
@@ -26,31 +25,6 @@ interface Props {
 }
 
 const { slug } = Astro.props;
-
-// Read the scene FRESH from disk each render (dev SSR per request, prod at build)
-// — never a static `import`. A cached import would show stale data after the
-// editor autosaves, and the autosave-on-load would then overwrite newer disk
-// content. Reading via fs keeps reloads accurate and saves non-destructive.
-// Resolve from process.cwd() (the Astro project root in both `dev` and `build`)
-// — NOT import.meta.url, which points into dist/ at build time.
-const blankScene = {
-  type: 'excalidraw',
-  version: 2,
-  source: 'nvdk.co',
-  elements: [],
-  appState: { viewBackgroundColor: '#ffffff' },
-  files: {},
-};
-let scene: Record<string, unknown> = blankScene;
-const scenePath = path.join(process.cwd(), 'src/data/scenes', `${slug}.json`);
-try {
-  scene = JSON.parse(readFileSync(scenePath, 'utf8'));
-} catch (err: unknown) {
-  // Missing scene file is fine (new post, no canvas saved yet). Anything else
-  // (parse error, permission error) is a real bug — surface it instead of
-  // silently rendering a blank canvas like before.
-  if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-}
 
 const entry = await getEntry('posts', slug);
 if (!entry) throw new Error(`ExcalidrawPost: no post entry for slug "${slug}"`);
@@ -103,11 +77,9 @@ const blogPostingLd = {
     <script type="application/ld+json" set:html={JSON.stringify(blogPostingLd)} />
 
     <style>
-      html,
-      body {
+      html, body {
         margin: 0;
         height: 100%;
-        /* Match the site so there's no white flash before the canvas mounts. */
         background: #0a0a0b;
       }
       .ex-home-link {
@@ -131,6 +103,6 @@ const blogPostingLd = {
   </head>
   <body>
     <a class="ex-home-link" href="/">← nvdk.co</a>
-    <ExcalidrawCanvas client:only="react" initialData={scene} slug={slug} />
+    <ExcalidrawCanvas client:only="react" slug={slug} />
   </body>
 </html>

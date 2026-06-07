@@ -1,31 +1,33 @@
 import { Excalidraw, serializeAsJSON } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Theme = "light" | "dark";
 
 /**
  * Excalidraw canvas island. Renders the vendored-from-source Excalidraw editor.
  *
- *   • editable=false (default) → read-only canvas for visitors (viewModeEnabled).
- *     The host controls this, so visitors cannot toggle back into edit mode.
- *   • editable=true (DEV + ?edit) → full editor. Every change is debounced,
- *     serialized with Excalidraw's serializeAsJSON, and POSTed to the dev-only
- *     /__canvas/scene endpoint, which writes src/data/scenes/<slug>.json.
- *   • initialData → a saved scene { elements, appState, files }.
+ *   • editable=false (default detect: ?edit in URL) → read-only canvas. The
+ *     host controls this via prop; the live write endpoint is auth-gated by
+ *     Cloudflare Access regardless, so visitors cannot edit even if they add
+ *     ?edit themselves.
+ *   • Scene loads on mount from `GET /api/scenes/<slug>` (KV-backed). When
+ *     editing, every debounced change is serialized via Excalidraw's
+ *     `serializeAsJSON` and PUT back to the same endpoint.
+ *   • `initialData` prop is still supported (legacy callers can preload), but
+ *     the default flow is to leave it null and let the canvas fetch.
  *
  * Mounted as `client:only="react"` — Excalidraw is browser-only (canvas, workers).
  */
 interface Props {
-  /** A saved Excalidraw scene: { elements, appState, files }. */
+  /** A pre-loaded Excalidraw scene; when omitted, fetched from /api/scenes/<slug>. */
   initialData?: Record<string, unknown> | null;
-  /** Post slug — the scene file key (src/data/scenes/<slug>.json). */
+  /** Post slug — both the API key (KV "scene:<slug>") and the save target. */
   slug?: string;
   /**
-   * Force edit/read mode. When omitted, edit mode auto-detects: DEV build + ?edit
-   * in the URL. (Detection must happen client-side — Astro strips searchParams
-   * from statically-rendered pages, and import.meta.env.DEV compiles to false in
-   * the production bundle, so this can never enable editing for visitors.)
+   * Force edit/read mode. When omitted, edit mode = `?edit` in the URL on the
+   * client. (Detection happens client-side because static pages strip
+   * searchParams at build.) Production writes are still gated by Access.
    */
   editable?: boolean;
   /** UI + canvas theme. Defaults to dark to match the site. */
@@ -33,12 +35,8 @@ interface Props {
 }
 
 const SAVE_DEBOUNCE_MS = 800;
+const API_BASE = "/api/scenes/";
 
-/**
- * Allow only same-origin /widgets/ URLs to render as live embeddables. Excalidraw
- * blocks any embeddable URL this rejects, so visitors can't be served arbitrary
- * iframes via a tampered scene file.
- */
 function validateEmbeddable(url: string): boolean {
   try {
     const u = new URL(url, window.location.origin);
@@ -48,13 +46,6 @@ function validateEmbeddable(url: string): boolean {
   }
 }
 
-/**
- * Render our own iframe for validated /widgets/ embeddables, with
- * `allow-same-origin allow-scripts` so the (same-origin) widget can load its
- * Astro hydration scripts and run live. Excalidraw's default embeddable sandbox
- * omits allow-same-origin → null origin → blocked scripts. Returning null for
- * anything else falls back to that locked-down default.
- */
 function renderEmbeddable(element: { link?: string | null }) {
   const url = element.link;
   if (!url || !validateEmbeddable(url)) return null;
@@ -71,19 +62,46 @@ function renderEmbeddable(element: { link?: string | null }) {
 
 function detectEditable(): boolean {
   return (
-    import.meta.env.DEV &&
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("edit")
   );
 }
 
-export default function ExcalidrawCanvas({ initialData = null, slug, editable, theme = "dark" }: Props) {
+export default function ExcalidrawCanvas({
+  initialData = null,
+  slug,
+  editable,
+  theme = "dark",
+}: Props) {
   const isEditable = editable ?? detectEditable();
+  const [scene, setScene] = useState<Record<string, unknown> | null>(initialData);
   const [status, setStatus] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Excalidraw fires onChange once on mount echoing the loaded scene. Skip that
   // one so merely opening the page doesn't rewrite the scene file every load.
   const sawMountChange = useRef(false);
+
+  // Fetch the scene from KV on mount when no initialData was passed.
+  useEffect(() => {
+    if (initialData || !slug || scene) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(API_BASE + encodeURIComponent(slug), { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) setScene(data);
+      } catch (err) {
+        if (!cancelled) {
+          setStatus(`load failed: ${err}`);
+          setScene({ elements: [], appState: { viewBackgroundColor: "#ffffff" }, files: {} });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initialData, scene]);
 
   const onChange = useCallback(
     (elements: any, appState: any, files: any) => {
@@ -94,14 +112,18 @@ export default function ExcalidrawCanvas({ initialData = null, slug, editable, t
       }
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(async () => {
-        const json = serializeAsJSON(elements, appState, files, "local");
+        const sceneJson = serializeAsJSON(elements, appState, files, "local");
         setStatus("saving…");
         try {
-          const res = await fetch("/__canvas/scene", {
-            method: "POST",
+          const res = await fetch(API_BASE + encodeURIComponent(slug), {
+            method: "PUT",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ slug, json }),
+            body: sceneJson,
           });
+          if (res.status === 401) {
+            setStatus("unauthorized — sign in");
+            return;
+          }
           setStatus(res.ok ? `saved ${slug}` : `save failed: ${await res.text()}`);
         } catch (err) {
           setStatus(`save failed: ${err}`);
@@ -111,12 +133,29 @@ export default function ExcalidrawCanvas({ initialData = null, slug, editable, t
     [isEditable, slug],
   );
 
+  if (!scene) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          display: "grid",
+          placeItems: "center",
+          background: "#0a0a0b",
+          color: "#71717a",
+          font: "12px ui-monospace, 'JetBrains Mono', monospace",
+        }}
+      >
+        loading canvas…
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: "fixed", inset: 0 }}>
-      {/* Read-only visitors don't need the hamburger menu (export/reset/etc.). */}
       {!isEditable && <style>{`.main-menu-trigger { display: none !important; }`}</style>}
       <Excalidraw
-        initialData={initialData}
+        initialData={scene}
         theme={theme}
         viewModeEnabled={!isEditable}
         onChange={isEditable ? onChange : undefined}

@@ -1,0 +1,162 @@
+---
+/**
+ * /admin — list every post (frontmatter ones from src/content/posts + KV ones
+ * created online) and offer a "new post" form. Protected by Cloudflare Access
+ * in production; bypassed when LOCAL_DEV_BYPASS_AUTH=true.
+ *
+ * Everything here is SSR — KV is only reachable at request time.
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import { requireAdmin } from '../../lib/auth';
+import { listPostSlugs, readPostMeta } from '../../lib/scenes';
+
+const env = Astro.locals.runtime.env;
+const denied = requireAdmin(Astro.request, env);
+if (denied) return denied;
+
+const collectionPosts = (await getCollection('posts')).map((p) => ({
+  slug: p.id.replace(/\.mdx?$/, ''),
+  title: p.data.title,
+  date: p.data.date.toISOString(),
+  summary: p.data.summary,
+  source: 'collection' as const,
+}));
+
+const kvSlugs = await listPostSlugs(env.SCENES);
+const kvPosts = (await Promise.all(kvSlugs.map((s) => readPostMeta(env.SCENES, s))))
+  .filter(Boolean)
+  .map((p) => ({ ...p!, source: 'kv' as const }));
+
+const all = [...collectionPosts, ...kvPosts].sort((a, b) => b.date.localeCompare(a.date));
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>admin — nvdk</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #0a0a0b;
+        color: #e4e4e7;
+        font: 14px/1.5 ui-monospace, 'JetBrains Mono', monospace;
+      }
+      main { max-width: 720px; margin: 0 auto; padding: 56px 24px; }
+      h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+      .sub { color: #71717a; margin-bottom: 36px; }
+      .new {
+        background: #18181b;
+        border: 1px solid #27272a;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 32px;
+      }
+      .new h2 { font-size: 13px; margin: 0 0 12px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.08em; }
+      .row { display: grid; grid-template-columns: 90px 1fr; gap: 10px 14px; align-items: center; margin-bottom: 10px; }
+      label { color: #71717a; font-size: 12px; }
+      input[type="text"] {
+        background: #0a0a0b; color: #e4e4e7; border: 1px solid #3f3f46;
+        border-radius: 6px; padding: 7px 10px; font: inherit; width: 100%;
+        box-sizing: border-box;
+      }
+      input:focus { outline: 2px solid #3b82f6; outline-offset: 0; border-color: transparent; }
+      button {
+        background: #3b82f6; color: #fff; border: 0;
+        border-radius: 6px; padding: 8px 14px; font: inherit; font-weight: 600;
+        cursor: pointer; margin-top: 6px;
+      }
+      button:hover { background: #2563eb; }
+      ul { list-style: none; padding: 0; margin: 0; }
+      li {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 12px; padding: 12px 4px; border-bottom: 1px solid #1f1f23;
+      }
+      li:last-child { border-bottom: 0; }
+      .title { color: #fafafa; font-weight: 500; }
+      .meta { color: #71717a; font-size: 12px; }
+      .tag {
+        display: inline-block; padding: 1px 6px; border-radius: 999px;
+        font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+        background: #18181b; border: 1px solid #27272a; color: #a1a1aa;
+        margin-left: 6px;
+      }
+      a { color: inherit; text-decoration: none; }
+      a:hover .title { color: #60a5fa; }
+      .err { color: #f87171; margin-top: 8px; font-size: 12px; min-height: 16px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>admin</h1>
+      <div class="sub">{all.length} {all.length === 1 ? 'post' : 'posts'} · canvas editor saves to KV in real time</div>
+
+      <div class="new">
+        <h2>new post</h2>
+        <form id="new-post">
+          <div class="row">
+            <label for="slug">slug</label>
+            <input type="text" name="slug" id="slug" required pattern="[a-z0-9][a-z0-9-]{0,63}" placeholder="my-new-post" autocomplete="off" />
+          </div>
+          <div class="row">
+            <label for="title">title</label>
+            <input type="text" name="title" id="title" required placeholder="My New Post" autocomplete="off" />
+          </div>
+          <div class="row">
+            <label for="summary">summary</label>
+            <input type="text" name="summary" id="summary" placeholder="optional" autocomplete="off" />
+          </div>
+          <button type="submit">create + open canvas</button>
+          <div class="err" id="err"></div>
+        </form>
+      </div>
+
+      <ul>
+        {all.map((p) => {
+          const href = p.source === 'kv'
+            ? `/post/${p.slug}/?edit`
+            : `/wip/${p.slug}/?edit`;
+          const date = new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          return (
+            <li>
+              <a href={href}>
+                <div class="title">
+                  {p.title}
+                  {p.source === 'kv' && <span class="tag">draft</span>}
+                </div>
+                <div class="meta">{p.slug} · {date}</div>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </main>
+
+    <script is:inline>
+      const form = document.getElementById('new-post');
+      const err = document.getElementById('err');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        err.textContent = '';
+        const data = Object.fromEntries(new FormData(form));
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          err.textContent = j.error || res.statusText;
+          return;
+        }
+        const { post } = await res.json();
+        location.href = `/post/${post.slug}/?edit`;
+      });
+    </script>
+  </body>
+</html>

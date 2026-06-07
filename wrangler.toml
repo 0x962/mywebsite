@@ -1,0 +1,18 @@
+name = "nvdk"
+compatibility_date = "2025-06-07"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# Authoring: who is allowed to write/create posts. Read-only API endpoints
+# (GET /api/scenes/...) are public; everything else requires a request with
+# `Cf-Access-Authenticated-User-Email` matching this allowlist.
+[vars]
+ADMIN_EMAILS = "n@nvdk.co"
+
+# Scene storage. KV value is the Excalidraw scene JSON for slug "<slug>",
+# stored under key "scene:<slug>". Post metadata for posts created online
+# is stored under "post:<slug>".
+[[kv_namespaces]]
+binding = "SCENES"
+id = "74782c54096c419397d9fde4495b1d70"
+preview_id = "9d5815080e214f2aacb03280c491da1a"

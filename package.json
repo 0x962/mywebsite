@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "wrangler pages dev ./dist",
     "deploy": "astro build && wrangler pages deploy dist --project-name=nvdk --branch=main --commit-dirty=true",
+    "seed-kv": "node scripts/seed-kv.mjs",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.13",
     "@astrojs/mdx": "^4.2.0",
     "@astrojs/react": "^4.2.0",
     "@astrojs/rss": "^4.0.11",
@@ -25,6 +27,7 @@
     "roughjs": "^4.6.6"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260607.1",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "typescript": "~5.9.0",
