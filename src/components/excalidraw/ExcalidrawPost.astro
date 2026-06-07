@@ -86,57 +86,27 @@ const blogPostingLd = {
         height: 100%;
         background: #0a0a0b;
       }
-      /* Push the canvas below the site topbar so Excalidraw's own toolbar
-         doesn't fight with it. ExcalidrawCanvas uses `position: fixed`
-         inside; the global CSS rule below moves its top edge. */
-      .excalidraw-stage {
-        position: fixed;
-        top: var(--topbar-height, 56px);
-        left: 0; right: 0; bottom: 0;
+      /* On canvas pages the topbar lives at the BOTTOM so it doesn't fight
+         Excalidraw's hamburger / shape toolbar / library panel along the top
+         edge. Both rules use :global() because the topbar markup is rendered
+         by TopBar.astro (its own scope) and the stage by the React island
+         (no scope at all). */
+      :global(.topbar) {
+        top: auto;
+        bottom: 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 0;
       }
-      .ex-edited {
+      :global(.excalidraw-stage) {
         position: fixed;
-        top: calc(var(--topbar-height, 56px) + 12px);
-        left: 16px;
-        z-index: 5;
-        font: 11px/1 'JetBrains Mono', ui-monospace, monospace;
-        color: #71717a;
-        background: rgba(15, 15, 16, 0.65);
-        border: 1px solid #27272a;
-        border-radius: 6px;
-        padding: 6px 9px;
-        letter-spacing: 0.02em;
-        pointer-events: none;
+        top: 0;
+        left: 0; right: 0;
+        bottom: var(--topbar-height, 56px);
       }
-      .ex-edited:empty { display: none; }
     </style>
   </head>
   <body>
     <TopBar />
-    <span class="ex-edited" data-slug={slug}></span>
     <ExcalidrawCanvas client:only="react" slug={slug} />
-    <script is:inline define:vars={{ slug }}>
-      // Show "edited X ago" overlay near the topbar. Failure is silent.
-      (async () => {
-        const el = document.querySelector(`.ex-edited[data-slug="${slug}"]`);
-        if (!el) return;
-        try {
-          const res = await fetch(`/data/meta/${encodeURIComponent(slug)}`, { cache: 'no-store' });
-          if (!res.ok) return;
-          const { lastEditedAt } = await res.json();
-          if (!lastEditedAt) return;
-          const sec = Math.max(0, (Date.now() - Date.parse(lastEditedAt)) / 1000);
-          let ago;
-          if (sec < 90) ago = 'just now';
-          else if (sec < 3600) ago = `${Math.round(sec / 60)}m ago`;
-          else if (sec < 36 * 3600) ago = `${Math.round(sec / 3600)}h ago`;
-          else if (sec < 14 * 86400) ago = `${Math.round(sec / 86400)}d ago`;
-          else if (sec < 70 * 86400) ago = `${Math.round(sec / (7 * 86400))}w ago`;
-          else if (sec < 540 * 86400) ago = `${Math.round(sec / (30.4 * 86400))}mo ago`;
-          else ago = `${Math.round(sec / (365.25 * 86400))}y ago`;
-          el.textContent = `edited ${ago}`;
-        } catch { /* leave empty */ }
-      })();
-    </script>
   </body>
 </html>
