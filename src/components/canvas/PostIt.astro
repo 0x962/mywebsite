@@ -14,14 +14,17 @@ interface Props {
   date?: string;
   color?: Color;
   class?: string;
+  /** Post slug — when set, a small "edited X ago" badge fetches /data/meta/<slug> on mount. */
+  slug?: string;
 }
 
-const { title, href, summary, date, color = 'amber', class: className } = Astro.props;
+const { title, href, summary, date, color = 'amber', class: className, slug } = Astro.props;
 ---
-<a href={href} class:list={['postit', `postit-${color}`, className]}>
+<a href={href} class:list={['postit', `postit-${color}`, className]} data-slug={slug}>
   {date && <span class="postit-date">{date}</span>}
   <span class="postit-title">{title}</span>
   {summary && <span class="postit-summary">{summary}</span>}
+  {slug && <span class="postit-edited" data-slot="edited"></span>}
   <span class="postit-open" aria-hidden="true">open ↗</span>
 </a>
 
@@ -86,6 +89,16 @@ const { title, href, summary, date, color = 'amber', class: className } = Astro.
   }
   .postit:hover .postit-open,
   .postit:focus-visible .postit-open { opacity: 1; }
+
+  .postit-edited {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    min-height: 1em;
+  }
+  .postit-edited:empty { display: none; }
 
   .postit-amber { --paper: #e6cd7e; }
   .postit-blue  { --paper: #aecbe2; --ink: #16222e; }

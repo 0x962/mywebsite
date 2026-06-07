@@ -35,14 +35,39 @@ export const sceneKey = (slug: string) => `scene:${slug}`;
 export const postKey  = (slug: string) => `post:${slug}`;
 export const INDEX_KEY = 'posts:index';
 
+/** Per-scene authoring metadata. Stored as KV metadata alongside scene:<slug>. */
+export interface SceneMeta {
+  lastEditedAt: string;   // ISO
+  lastEditedBy: string;   // verified email from the Access JWT
+}
+
 export async function readScene(kv: KVNamespace, slug: string): Promise<unknown> {
   const raw = await kv.get(sceneKey(slug));
   if (!raw) return BLANK_SCENE;
   try { return JSON.parse(raw); } catch { return BLANK_SCENE; }
 }
 
-export async function writeScene(kv: KVNamespace, slug: string, scene: unknown): Promise<void> {
-  await kv.put(sceneKey(slug), JSON.stringify(scene));
+/**
+ * Read the metadata KV stored alongside the scene blob. Returns null if the
+ * key doesn't exist OR if metadata wasn't written (e.g. legacy seeds). The
+ * value body is not read — that's `readScene`'s job.
+ */
+export async function readSceneMeta(kv: KVNamespace, slug: string): Promise<SceneMeta | null> {
+  const { metadata } = await kv.getWithMetadata<SceneMeta>(sceneKey(slug), { type: 'text' });
+  return metadata ?? null;
+}
+
+/**
+ * Write the scene blob AND its authoring metadata in a single KV put. KV
+ * supports up to 1024 bytes of metadata per key — `SceneMeta` is well under.
+ */
+export async function writeScene(
+  kv: KVNamespace,
+  slug: string,
+  scene: unknown,
+  meta: SceneMeta,
+): Promise<void> {
+  await kv.put(sceneKey(slug), JSON.stringify(scene), { metadata: meta });
 }
 
 export async function readPostMeta(kv: KVNamespace, slug: string): Promise<PostMeta | null> {

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireAdmin, type RuntimeEnv } from '../../../lib/auth';
+import { authenticate, type RuntimeEnv } from '../../../lib/auth';
 import { isSlug, writeScene } from '../../../lib/scenes';
 
 /**
@@ -24,8 +24,8 @@ function env(locals: App.Locals): RuntimeEnv {
 export const PUT: APIRoute = async ({ params, request, locals }) => {
   if (!isSlug(params.slug)) return json({ error: 'bad slug' }, 400);
   const e = env(locals);
-  const denied = await requireAdmin(request, e);
-  if (denied) return denied;
+  const auth = await authenticate(request, e);
+  if ('denied' in auth) return auth.denied;
 
   let body: unknown;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
@@ -33,6 +33,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return json({ error: 'scene must have elements array' }, 400);
   }
 
-  await writeScene(e.SCENES, params.slug, body);
-  return json({ ok: true });
+  const meta = { lastEditedAt: new Date().toISOString(), lastEditedBy: auth.email };
+  await writeScene(e.SCENES, params.slug, body, meta);
+  return json({ ok: true, ...meta });
 };

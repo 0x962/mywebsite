@@ -184,11 +184,16 @@ function isPagesDevOrigin(request: Request): boolean {
   }
 }
 
-export async function requireAdmin(request: Request, env: RuntimeEnv): Promise<Response | null> {
-  if (env.LOCAL_DEV_BYPASS_AUTH === 'true') return null;
+/** Result of an auth check: either a denial Response (return it), or the verified admin email. */
+export type AuthResult = { denied: Response } | { email: string };
+
+const LOCAL_DEV_EMAIL = 'local-dev@nvdk.co';
+
+export async function authenticate(request: Request, env: RuntimeEnv): Promise<AuthResult> {
+  if (env.LOCAL_DEV_BYPASS_AUTH === 'true') return { email: LOCAL_DEV_EMAIL };
 
   if (isPagesDevOrigin(request)) {
-    return forbidden('direct pages.dev origin not allowed; use nvdk.co');
+    return { denied: forbidden('direct pages.dev origin not allowed; use nvdk.co') };
   }
 
   const team = env.CF_ACCESS_TEAM_DOMAIN;
@@ -197,23 +202,28 @@ export async function requireAdmin(request: Request, env: RuntimeEnv): Promise<R
     .map((s) => s.trim())
     .filter(Boolean);
   if (!team || auds.length === 0) {
-    // Fail closed when not yet configured — never fall back to header trust.
-    return unauthorized('Access not configured: set CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD');
+    return { denied: unauthorized('Access not configured: set CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD') };
   }
 
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!jwt) return unauthorized('missing Cf-Access-Jwt-Assertion');
+  if (!jwt) return { denied: unauthorized('missing Cf-Access-Jwt-Assertion') };
 
   const payload = await verifyAccessJwt(jwt, team, auds);
-  if (!payload || !payload.email) return unauthorized('invalid Access token');
+  if (!payload || !payload.email) return { denied: unauthorized('invalid Access token') };
 
   const allowed = (env.ADMIN_EMAILS ?? '')
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   if (!allowed.includes(payload.email.toLowerCase())) {
-    return forbidden(`not in admin allowlist: ${payload.email}`);
+    return { denied: forbidden(`not in admin allowlist: ${payload.email}`) };
   }
 
-  return null;
+  return { email: payload.email };
+}
+
+/** Backwards-compatible shorthand for endpoints that only care about pass/deny. */
+export async function requireAdmin(request: Request, env: RuntimeEnv): Promise<Response | null> {
+  const r = await authenticate(request, env);
+  return 'denied' in r ? r.denied : null;
 }

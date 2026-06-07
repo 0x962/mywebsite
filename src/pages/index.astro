@@ -91,26 +91,32 @@ const websiteLd = {
             So I stopped waiting for &ldquo;done.&rdquo; Everything goes up from the first line,
             half-built and rough, and gets better in public (or doesn't).
           </p>
-          <p class="canvas-intro-kicker">This is my workspace, not a portfolio.</p>
+          <p class="canvas-intro-kicker">This is my thinkspace, public.</p>
         </div>
       </Place>
 
-      {/* The posts, as scattered sticky notes. Real links, real text. */}
+      {/* The posts, as scattered sticky notes. Real links, real text.
+          Place IDs are slug-based (`post-${slug}`) so the drag-editor's
+          saved layout stays attached to the right post if the date order
+          shifts later. The slot still cycles by index for visual variety. */}
       {posts.map((post, i) => {
         const s = slotFor(i);
+        const slug = post.id.replace(/\.mdx?$/, '');
+        const layoutId = `post-${slug}`;
         return (
           <Place
-            id={`post-${i}`} saved={layout[`post-${i}`]}
+            id={layoutId} saved={layout[layoutId]}
             x={s.desktop.x} y={s.desktop.y} rotate={s.desktop.rotate} z={s.desktop.z} w={s.desktop.w}
             tablet={s.tablet}
             mobile={s.mobile}
           >
             <PostIt
-              href={`/wip/${post.id}/`}
+              href={`/wip/${slug}/`}
               title={post.data.title}
               summary={post.data.summary || undefined}
               date={fmtDate(post.data.date)}
               color={s.color}
+              slug={slug}
             />
           </Place>
         );
@@ -152,6 +158,34 @@ const websiteLd = {
     </Canvas>
   </div>
 </Layout>
+
+<script is:inline>
+  // Hydrate "edited X ago" on each post-it. Static page → fetch per slug after load.
+  // Single GET to /data/meta/<slug>; fail silently (the slot collapses to empty).
+  (() => {
+    const fmtAgo = (iso) => {
+      const sec = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+      if (sec < 90) return 'edited just now';
+      const min = sec / 60;        if (min < 90)  return `edited ${Math.round(min)}m ago`;
+      const hr  = min / 60;        if (hr  < 36)  return `edited ${Math.round(hr)}h ago`;
+      const day = hr / 24;         if (day < 14)  return `edited ${Math.round(day)}d ago`;
+      const wk  = day / 7;         if (wk  < 10)  return `edited ${Math.round(wk)}w ago`;
+      const mo  = day / 30.4;      if (mo  < 18)  return `edited ${Math.round(mo)}mo ago`;
+      return `edited ${Math.round(day / 365.25)}y ago`;
+    };
+    document.querySelectorAll('.postit[data-slug]').forEach(async (el) => {
+      const slug = el.getAttribute('data-slug');
+      const slot = el.querySelector('[data-slot="edited"]');
+      if (!slug || !slot) return;
+      try {
+        const res = await fetch(`/data/meta/${encodeURIComponent(slug)}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const { lastEditedAt } = await res.json();
+        if (lastEditedAt) slot.textContent = fmtAgo(lastEditedAt);
+      } catch { /* leave empty */ }
+    });
+  })();
+</script>
 
 <style>
   .canvas-intro {

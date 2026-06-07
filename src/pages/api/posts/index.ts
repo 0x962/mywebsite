@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireAdmin, type RuntimeEnv } from '../../../lib/auth';
+import { authenticate, requireAdmin, type RuntimeEnv } from '../../../lib/auth';
 import {
   BLANK_SCENE,
   addToIndex,
@@ -42,8 +42,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 // scene and stores metadata. Idempotent on slug collision (409).
 export const POST: APIRoute = async ({ request, locals }) => {
   const e = env(locals);
-  const denied = await requireAdmin(request, e);
-  if (denied) return denied;
+  const auth = await authenticate(request, e);
+  if ('denied' in auth) return auth.denied;
 
   let body: unknown;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
@@ -53,15 +53,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (await readPostMeta(e.SCENES, b.slug)) return json({ error: 'slug taken' }, 409);
 
+  const now = new Date().toISOString();
   const meta: PostMeta = {
     slug: b.slug,
     title: b.title.trim(),
-    date: new Date().toISOString(),
+    date: now,
     summary: typeof b.summary === 'string' ? b.summary.trim() : '',
     draft: true,
   };
 
-  await writeScene(e.SCENES, meta.slug, BLANK_SCENE);
+  await writeScene(e.SCENES, meta.slug, BLANK_SCENE, { lastEditedAt: now, lastEditedBy: auth.email });
   await writePostMeta(e.SCENES, meta);
   await addToIndex(e.SCENES, meta.slug);
 

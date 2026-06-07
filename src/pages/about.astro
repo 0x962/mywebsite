@@ -6,7 +6,6 @@ import Place from '../components/canvas/Place.astro';
 import Polaroid from '../components/canvas/Polaroid.astro';
 import Scribble from '../components/canvas/Scribble.astro';
 import Doodle from '../components/canvas/Doodle.astro';
-import EmailRotator from '../components/EmailRotator.tsx';
 import { loadLayout } from '../utils/layout';
 
 const layout = loadLayout('about');
@@ -404,7 +403,7 @@ const personLd = {
         x={104} y={3349} rotate={-1} z={3} w={520}
         tablet={{ x: 40, y: 6428, w: 600 }}
         mobile={{ x: 20, y: 8078, w: 340 }}>
-        <p class="scrap-email">Reach me at <EmailRotator client:load />.</p>
+        <p class="scrap-email">Reach me at n@nvdk.co.</p>
       </Place>
 
       {/* ===== Footer — doodles scattered across the very bottom ===== */}
