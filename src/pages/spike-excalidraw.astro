@@ -7,8 +7,6 @@
  */
 import scene from '../data/scenes/spike.json';
 import ExcalidrawCanvas from '../components/excalidraw/ExcalidrawCanvas.tsx';
-
-const editable = import.meta.env.DEV && Astro.url.searchParams.has('edit');
 ---
 <!doctype html>
 <html lang="en">
@@ -25,6 +23,6 @@ const editable = import.meta.env.DEV && Astro.url.searchParams.has('edit');
     </style>
   </head>
   <body>
-    <ExcalidrawCanvas client:only="react" initialData={scene} viewMode={!editable} />
+    <ExcalidrawCanvas client:only="react" initialData={scene} slug="spike" />
   </body>
 </html>

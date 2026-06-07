@@ -4,6 +4,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { fileURLToPath } from 'node:url';
 import { canvasSavePlugin } from './src/dev/canvas-save-plugin.mjs';
+import { sceneSavePlugin } from './src/dev/scene-save-plugin.mjs';
 
 // We consume Excalidraw built from source in the vendored submodule. We alias the
 // entry + its CSS straight at the built files; the entry's own imports of the
@@ -27,7 +28,7 @@ export default defineConfig({
     },
   },
   vite: {
-    plugins: [canvasSavePlugin()],
+    plugins: [canvasSavePlugin(), sceneSavePlugin()],
     resolve: {
       alias: [
         { find: '@excalidraw/excalidraw/index.css', replacement: `${excalidrawPkg}/${excalidrawDist}/index.css` },
