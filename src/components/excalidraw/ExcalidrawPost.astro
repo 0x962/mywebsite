@@ -98,9 +98,11 @@ const blogPostingLd = {
       /* Move Excalidraw's own top toolbar (hamburger + shape strip + library
          toggle, all inside `.FixedSideContainer_side_top`) to the BOTTOM of
          the canvas so its buttons don't cover the drawing along the top edge. */
+      /* Lift it clear of Excalidraw's own bottom-left zoom controls
+         (the hamburger sits on the left of this same bar). */
       :global(.excalidraw .FixedSideContainer_side_top) {
         top: auto !important;
-        bottom: 0 !important;
+        bottom: 64px !important;
       }
     </style>
   </head>
