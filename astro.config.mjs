@@ -34,14 +34,17 @@ function messageChannelPolyfill() {
     name: 'cf-message-channel-polyfill',
     apply: 'build',
     enforce: 'post',
-    // Prepend to EVERY SSR chunk: imported chunks execute their top-level
-    // before control returns to the entry, so polyfilling only the entry
-    // is too late. The shim is idempotent (typeof guard).
+    // Only inject the shim into SSR chunks that actually reference
+    // MessageChannel (i.e. the ones bundling React's server renderer).
+    // Prepending to every client chunk too was putting statements before
+    // `import` declarations in ESM modules — silently breaking them in the
+    // browser, which is why client islands stopped hydrating. The shim is
+    // wrapped in an IIFE so the leading non-import code is valid module text.
     generateBundle(_opts, bundle) {
       for (const chunk of Object.values(bundle)) {
-        if (chunk.type === 'chunk') {
-          chunk.code = SHIM + '\n' + chunk.code;
-        }
+        if (chunk.type !== 'chunk') continue;
+        if (!chunk.code.includes('MessageChannel')) continue;
+        chunk.code = `(()=>{${SHIM}})();\n${chunk.code}`;
       }
     },
   };

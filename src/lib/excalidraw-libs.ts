@@ -2,17 +2,20 @@
  * Bundle the three default Excalidraw libraries (HTML inputs, wireframing
  * placeholders, desktop resolutions) into a single `libraryItems` array that
  * gets passed via `initialData.libraryItems` on canvas mount. That seeds every
- * visitor with the same set of stencils without requiring per-browser
- * localStorage state.
+ * visitor with the same set of stencils without per-browser localStorage state.
  *
  * Two formats in the wild:
  *   v1: { library: ExcalidrawElement[][] }              ← one inner array per item
  *   v2: { libraryItems: { id, status, elements, … }[] }
  * v1 entries are normalised into v2 shape with synthetic ids.
+ *
+ * Files are stored as `.json` (not `.excalidrawlib`) so Vite handles them as
+ * native JSON modules — the `?raw` import on the original extension was
+ * silently failing to bundle.
  */
-import htmlInputs from '../data/excalidraw-libraries/html-input-elements.excalidrawlib?raw';
-import placeholders from '../data/excalidraw-libraries/wireframing-placeholders.excalidrawlib?raw';
-import desktops from '../data/excalidraw-libraries/desktop-resolutions.excalidrawlib?raw';
+import htmlInputs from '../data/excalidraw-libraries/html-input-elements.json';
+import placeholders from '../data/excalidraw-libraries/wireframing-placeholders.json';
+import desktops from '../data/excalidraw-libraries/desktop-resolutions.json';
 
 interface LibraryV2Item {
   id: string;
@@ -22,13 +25,16 @@ interface LibraryV2Item {
   name?: string;
 }
 
-function normalise(raw: string, key: string): LibraryV2Item[] {
-  const parsed = JSON.parse(raw) as
-    | { type: string; version: 2; libraryItems: LibraryV2Item[] }
-    | { type: string; version: 1; library: unknown[][] };
-  if ('libraryItems' in parsed) return parsed.libraryItems;
+interface RawV2 { libraryItems: LibraryV2Item[] }
+interface RawV1 { library: unknown[][] }
+
+function normalise(raw: unknown, key: string): LibraryV2Item[] {
+  if (raw && typeof raw === 'object' && 'libraryItems' in raw) {
+    return (raw as RawV2).libraryItems;
+  }
   // v1 — each inner array is one item's elements.
-  return parsed.library.map((elements, i) => ({
+  const v1 = raw as RawV1;
+  return (v1.library ?? []).map((elements, i) => ({
     id: `${key}-${i}`,
     status: 'published',
     elements,

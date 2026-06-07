@@ -156,7 +156,11 @@ export default function ExcalidrawCanvas({
     <div className="excalidraw-stage">
       {!isEditable && <style>{`.main-menu-trigger { display: none !important; }`}</style>}
       <Excalidraw
-        initialData={{ ...scene, libraryItems: DEFAULT_LIBRARY_ITEMS }}
+        // `scrollToContent: true` auto-fits the viewport on mount so visitors
+        // land on the actual content instead of an empty top-left corner.
+        // Without it, scenes whose elements live far from (0,0) (anything an
+        // editor panned away from origin) render as a blank canvas in view mode.
+        initialData={{ ...scene, libraryItems: DEFAULT_LIBRARY_ITEMS, scrollToContent: true }}
         theme={theme}
         viewModeEnabled={!isEditable}
         onChange={isEditable ? onChange : undefined}
