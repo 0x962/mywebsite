@@ -1,11 +1,15 @@
 import type { APIRoute } from 'astro';
 import { authenticate, type RuntimeEnv } from '../../../lib/auth';
-import { isSlug, writeScene } from '../../../lib/scenes';
+import { isSlug, pruneHistory, readSceneWithMeta, writeScene } from '../../../lib/scenes';
 
 /**
  * Scene write endpoint. PUT only — public reads live at /data/scenes/<slug>
  * (outside the Access-gated /api/ tree, since Access JSON apps don't support
  * per-method include rules).
+ *
+ * Every write snapshots the PRIOR scene into KV under
+ * `history:<slug>:<iso-timestamp>` so any save is recoverable from /admin →
+ * history. KV has no native versioning; this is the only safety net.
  */
 export const prerender = false;
 
@@ -33,7 +37,9 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return json({ error: 'scene must have elements array' }, 400);
   }
 
+  const prior = await readSceneWithMeta(e.SCENES, params.slug);
   const meta = { lastEditedAt: new Date().toISOString(), lastEditedBy: auth.email };
-  await writeScene(e.SCENES, params.slug, body, meta);
+  await writeScene(e.SCENES, params.slug, body, meta, prior ?? undefined);
+  await pruneHistory(e.SCENES, params.slug);
   return json({ ok: true, ...meta });
 };

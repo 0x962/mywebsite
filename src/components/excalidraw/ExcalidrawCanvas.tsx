@@ -6,25 +6,14 @@ import { DEFAULT_LIBRARY_ITEMS } from "../../lib/excalidraw-libs";
 type Theme = "light" | "dark";
 
 /**
- * Excalidraw canvas island. ONE mode for everyone — the canvas is always
+ * Excalidraw canvas island. One mode for everyone — the canvas is always
  * fully editable. Autosave attempts hit `PUT /api/scenes/<slug>`:
  *
- *   • Admin (Access cookie present) → write succeeds, scene persists.
+ *   • Admin (Access cookie present) → write succeeds; the server-side
+ *     handler snapshots the PRIOR scene into `history:<slug>:<ts>` before
+ *     overwriting, so any save is recoverable from /admin → history.
  *   • Anyone else → write 401s; we flip into local-only mode and stop
  *     retrying. A one-shot banner explains it auto-dismisses.
- *
- * ANTI-DATAWIPE GUARDS (NEVER REMOVE WITHOUT THINKING):
- *
- *   1. We never save unless the initial load explicitly succeeded
- *      (`loadedRealScene` ref). Fetch errors → fall through to blank, but
- *      blank can never be PUT back.
- *   2. We refuse to save a scene whose non-deleted element count is LESS
- *      than what we loaded (`loadedElementCount` ref). Real deletes still
- *      work — but only if the canvas first saw the full load. A racing
- *      mount that briefly has zero elements can't clobber a real scene.
- *
- * Both guards exist because earlier versions of this file have wiped real
- * KV content twice. The blast radius is total (KV is the source of truth).
  */
 interface Props {
   initialData?: Record<string, unknown> | null;
@@ -59,15 +48,6 @@ function renderEmbeddable(element: { link?: string | null }) {
     />
   );
 }
-
-const liveCount = (elements: unknown): number => {
-  if (!Array.isArray(elements)) return 0;
-  let n = 0;
-  for (const e of elements) {
-    if (e && typeof e === "object" && !(e as { isDeleted?: boolean }).isDeleted) n++;
-  }
-  return n;
-};
 
 /**
  * Compute Excalidraw scrollX/scrollY for an initial top-left framing.
@@ -109,14 +89,6 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sawMountChange = useRef(false);
 
-  // Guards against accidental wipes — see file header.
-  const loadedRealScene = useRef(initialData != null);
-  const loadedElementCount = useRef(
-    initialData && Array.isArray((initialData as { elements?: unknown }).elements)
-      ? liveCount((initialData as { elements?: unknown[] }).elements)
-      : 0,
-  );
-
   useEffect(() => {
     if (initialData || !slug || scene) return;
     let cancelled = false;
@@ -126,15 +98,10 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
-        loadedRealScene.current = true;
-        loadedElementCount.current = liveCount((data as { elements?: unknown }).elements);
         setScene(data);
       } catch (err) {
         if (cancelled) return;
         setLoadError(String(err));
-        // IMPORTANT: do NOT set loadedRealScene = true here. The fallback
-        // exists only so React can render *something* for the user; the
-        // save path stays disabled so this blank can never be PUT back.
         setScene({ elements: [], appState: { viewBackgroundColor: "#ffffff" }, files: {} });
       }
     })();
@@ -155,22 +122,11 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
     (elements: any, appState: any, files: any) => {
       if (!slug || localOnly.current) return;
 
-      // GUARD 1: never save if the initial load failed.
-      if (!loadedRealScene.current) return;
-
       // Skip the synthetic onChange Excalidraw fires on mount echoing the loaded scene.
       if (!sawMountChange.current) {
         sawMountChange.current = true;
         return;
       }
-
-      // GUARD 2: refuse to shrink. If the in-canvas scene has fewer live
-      // elements than what we loaded, it's almost certainly a mount race
-      // (Excalidraw briefly reports an empty state during scrollToContent
-      // / library hydration / theme change). Skip the save — wait for a
-      // change that at least matches the loaded count.
-      const now = liveCount(elements);
-      if (now < loadedElementCount.current) return;
 
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(async () => {
@@ -184,8 +140,6 @@ export default function ExcalidrawCanvas({ initialData = null, slug, theme = "da
             redirect: "manual",
           });
           if (res.ok) {
-            // Successful save → the canvas size IS the new baseline.
-            loadedElementCount.current = now;
             setSavingLabel("saved");
             setTimeout(() => setSavingLabel(""), 1200);
             return;

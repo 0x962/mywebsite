@@ -1,0 +1,33 @@
+---
+/**
+ * /admin/history/<slug> — thin SSR shell. Loads the history entries from KV
+ * and hands them to the React HistoryView component.
+ */
+export const prerender = false;
+
+import { requireAdmin } from '../../../lib/auth';
+import { isSlug, listHistory } from '../../../lib/scenes';
+import HistoryView from '../../../components/admin/HistoryView.tsx';
+
+const slug = Astro.params.slug;
+if (!isSlug(slug)) return new Response('not found', { status: 404 });
+
+const env = Astro.locals.runtime.env;
+const denied = await requireAdmin(Astro.request, env);
+if (denied) return denied;
+
+const entries = await listHistory(env.SCENES, slug);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>history · {slug} — admin</title>
+    <style>html, body { margin: 0; background: #0a0a0b; min-height: 100vh; }</style>
+  </head>
+  <body>
+    <HistoryView client:only="react" slug={slug} initialEntries={entries} />
+  </body>
+</html>

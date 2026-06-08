@@ -65,16 +65,99 @@ export async function readSceneMeta(kv: KVNamespace, slug: string): Promise<Scen
 }
 
 /**
- * Write the scene blob AND its authoring metadata in a single KV put. KV
- * supports up to 1024 bytes of metadata per key — `SceneMeta` is well under.
+ * Write the scene + metadata. Before overwriting, snapshot the existing scene
+ * into `history:<slug>:<iso-timestamp>` so any save is recoverable. KV has no
+ * native versioning, so this manual history layer is the only safety net.
+ *
+ * Caller passes `prior` (the scene we're about to overwrite). We don't read
+ * it ourselves because the PUT handler already has the previous value in
+ * scope from a `getWithMetadata` it does for the meta check.
  */
 export async function writeScene(
   kv: KVNamespace,
   slug: string,
   scene: unknown,
   meta: SceneMeta,
+  prior?: { value: string; meta: SceneMeta | null },
 ): Promise<void> {
+  if (prior && prior.value) {
+    const ts = meta.lastEditedAt; // ISO; same as the new write's timestamp
+    const histKey = `history:${slug}:${ts}`;
+    await kv.put(histKey, prior.value, {
+      metadata: prior.meta ?? undefined,
+      // 1-year backstop. Real retention is capped by HISTORY_MAX via prune.
+      expirationTtl: 365 * 24 * 60 * 60,
+    });
+  }
   await kv.put(sceneKey(slug), JSON.stringify(scene), { metadata: meta });
+}
+
+/** Last N history snapshots we keep per slug. Older are pruned on each save. */
+export const HISTORY_MAX = 500;
+
+/**
+ * Delete history entries past `HISTORY_MAX` (oldest first). Cheap when the
+ * count is small; runs after every successful save.
+ */
+export async function pruneHistory(kv: KVNamespace, slug: string): Promise<number> {
+  const prefix = `history:${slug}:`;
+  const { keys } = await kv.list({ prefix, limit: 1000 });
+  if (keys.length <= HISTORY_MAX) return 0;
+  // Sort newest first by the ISO suffix; everything after HISTORY_MAX gets deleted.
+  const sorted = [...keys].sort((a, b) => (a.name < b.name ? 1 : -1));
+  const toDelete = sorted.slice(HISTORY_MAX);
+  await Promise.all(toDelete.map((k) => kv.delete(k.name)));
+  return toDelete.length;
+}
+
+/**
+ * Read both the raw value and metadata for the CURRENT scene — used by the
+ * PUT handler to capture `prior` for the history snapshot.
+ */
+export async function readSceneWithMeta(
+  kv: KVNamespace,
+  slug: string,
+): Promise<{ value: string; meta: SceneMeta | null } | null> {
+  const { value, metadata } = await kv.getWithMetadata<SceneMeta>(sceneKey(slug), { type: 'text' });
+  if (!value) return null;
+  return { value, meta: metadata ?? null };
+}
+
+/* ------------------------------------------------------------------ history */
+
+export interface HistoryEntry {
+  /** Full key, e.g. "history:plot:2026-06-07T22:35:05.123Z" */
+  key: string;
+  /** ISO timestamp parsed from the key */
+  ts: string;
+  /** Metadata of the snapshot — who wrote it and when. May be null on legacy. */
+  meta: SceneMeta | null;
+}
+
+/**
+ * List all history snapshots for a slug, newest first. Returns just the
+ * pointer + metadata; the snapshot body is fetched on demand via readHistory.
+ */
+export async function listHistory(kv: KVNamespace, slug: string): Promise<HistoryEntry[]> {
+  const prefix = `history:${slug}:`;
+  const { keys } = await kv.list<SceneMeta>({ prefix, limit: 1000 });
+  return keys
+    .map((k) => ({ key: k.name, ts: k.name.slice(prefix.length), meta: k.metadata ?? null }))
+    .sort((a, b) => (a.ts < b.ts ? 1 : -1));
+}
+
+/** Read a specific historical snapshot. */
+export async function readHistory(
+  kv: KVNamespace,
+  histKey: string,
+): Promise<{ scene: unknown; meta: SceneMeta | null } | null> {
+  const { value, metadata } = await kv.getWithMetadata<SceneMeta>(histKey, { type: 'text' });
+  if (!value) return null;
+  try {
+    return { scene: JSON.parse(value), meta: metadata ?? null };
+  } catch {
+    return null;
+  }
 }
 
 export async function readPostMeta(kv: KVNamespace, slug: string): Promise<PostMeta | null> {

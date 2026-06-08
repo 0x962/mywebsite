@@ -1,5 +1,7 @@
 ---
-export const prerender = true;
+// SSR so we can honour KV publish overrides (set via /admin's toggle) without
+// rebuilding. Layout still loads from src/data/layouts/index.json at build.
+export const prerender = false;
 import Layout from '../components/Layout.astro';
 import Canvas from '../components/canvas/Canvas.astro';
 import Place from '../components/canvas/Place.astro';
@@ -7,10 +9,22 @@ import Scribble from '../components/canvas/Scribble.astro';
 import PostIt from '../components/canvas/PostIt.astro';
 import { getCollection } from 'astro:content';
 import { loadLayout } from '../utils/layout';
+import { readManyOverrides } from '../lib/scenes';
 
 const layout = loadLayout('index');
 
-const posts = (await getCollection('posts', ({ data }) => !data.draft))
+const allPosts = await getCollection('posts');
+const overrides = await readManyOverrides(
+  Astro.locals.runtime.env.SCENES,
+  allPosts.map((p) => p.id.replace(/\.mdx?$/, '')),
+);
+// Effective filter: override.published wins if set; else !frontmatter.draft.
+const posts = allPosts
+  .filter((p) => {
+    const slug = p.id.replace(/\.mdx?$/, '');
+    const ov = overrides[slug];
+    return ov ? ov.published : !p.data.draft;
+  })
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
 const fmtDate = (d: Date) =>
