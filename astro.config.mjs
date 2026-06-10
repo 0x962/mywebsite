@@ -57,8 +57,8 @@ export default defineConfig({
   adapter: cloudflare({
     platformProxy: { enabled: true, configPath: './wrangler.toml' },
   }),
-  // Old canvas-post URLs. Posts live at /post/<slug> now.
-  redirects: { '/wip/[slug]': '/post/[slug]' },
+  // Old canvas-post URLs redirect via public/_redirects (Pages-native rule —
+  // Astro's `redirects` config emits a pattern that misses trailing slashes).
   integrations: [react(), sitemap()],
   vite: {
     plugins: [canvasSavePlugin(), messageChannelPolyfill()],

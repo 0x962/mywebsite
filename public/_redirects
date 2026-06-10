@@ -1,0 +1,3 @@
+# Old canvas-post URLs. Posts live at /post/<slug> now.
+# The splat keeps any trailing slash, which /post/[slug] accepts either way.
+/wip/* /post/:splat 301
