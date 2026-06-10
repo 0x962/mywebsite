@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 /**
  * One-shot: create the single Cloudflare Access self-hosted application that
- * gates /admin, /api/posts*, and /api/scenes/* (all methods).
+ * gates /admin and /api/posts* (all methods).
  *
  *   node scripts/setup-access.mjs
  *
- * ONE app, not three: the canvas editor PUTs scenes via `fetch()` from
- * /wip/<slug>/?edit. When Access challenges that request, it 302s to the
- * login page on the team's *.cloudflareaccess.com origin — a CORS-mode
- * fetch can't follow a cross-origin redirect without CORS headers on the
- * login page (and there aren't any). Splitting protected paths into
- * separate Access apps means separate session cookies, so even an already-
- * logged-in /admin user gets the challenge on /api/scenes/* and the fetch
- * blows up. One app → one cookie → no fresh challenge on the PUT path.
+ * ONE app, not several: the admin SPA calls /api/posts* via `fetch()` from
+ * /admin. When Access challenges that request, it 302s to the login page on
+ * the team's *.cloudflareaccess.com origin — a CORS-mode fetch can't follow
+ * a cross-origin redirect without CORS headers on the login page (and there
+ * aren't any). One app → one session cookie → no fresh challenge on the
+ * fetch path.
  *
  * The script tears down any previous "nvdk admin / nvdk posts api / nvdk
  * scenes write" apps before creating the consolidated one. AUDs are
@@ -37,7 +35,6 @@ const CONSOLIDATED = {
     'nvdk.co/admin/*',
     'nvdk.co/api/posts',
     'nvdk.co/api/posts/*',
-    'nvdk.co/api/scenes/*',
   ],
 };
 

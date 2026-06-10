@@ -1,9 +1,7 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import cloudflare from '@astrojs/cloudflare';
-import { fileURLToPath } from 'node:url';
 import { canvasSavePlugin } from './src/dev/canvas-save-plugin.mjs';
 
 /**
@@ -50,49 +48,27 @@ function messageChannelPolyfill() {
   };
 }
 
-// We consume Excalidraw built from source in the vendored submodule. We alias the
-// entry + its CSS straight at the built files; the entry's own imports of the
-// sibling workspace packages (@excalidraw/common|element|math) and third-party
-// deps then resolve via realpath from vendor/excalidraw/node_modules — so the
-// whole graph is from-source. `dedupe` forces a single React instance shared
-// between the Astro island and Excalidraw (two copies break hooks/context).
-const excalidrawPkg = fileURLToPath(
-  new URL('./vendor/excalidraw/packages/excalidraw', import.meta.url),
-);
-// `astro build` (incl. `npm run deploy`) → prod bundle; `astro dev` → dev bundle.
-// Keyed off the CLI command, which is reliable at config-eval time (NODE_ENV isn't).
-const excalidrawDist = process.argv.includes('build') ? 'dist/prod' : 'dist/dev';
-
 export default defineConfig({
   site: 'https://nvdk.co',
   // `server` = SSR by default with the Cloudflare adapter. Pages stay static when
   // they declare `export const prerender = true`. Required so /admin, /post/<slug>,
-  // and the /api/* endpoints can read/write KV at request time.
+  // and the /api/* endpoints can read R2 at request time.
   output: 'server',
   adapter: cloudflare({
     platformProxy: { enabled: true, configPath: './wrangler.toml' },
   }),
   // Old canvas-post URLs. Posts live at /post/<slug> now.
   redirects: { '/wip/[slug]': '/post/[slug]' },
-  integrations: [react(), mdx(), sitemap()],
-  markdown: {
-    shikiConfig: {
-      theme: 'github-dark-default',
-      wrap: false,
-    },
-  },
+  integrations: [react(), sitemap()],
   vite: {
     plugins: [canvasSavePlugin(), messageChannelPolyfill()],
     resolve: {
       alias: [
-        { find: '@excalidraw/excalidraw/index.css', replacement: `${excalidrawPkg}/${excalidrawDist}/index.css` },
-        { find: /^@excalidraw\/excalidraw$/, replacement: `${excalidrawPkg}/${excalidrawDist}/index.js` },
         // SSR on Workers: react-dom/server.browser pulls in MessageChannel,
         // which the Workers runtime lacks. The .edge build is the same API
         // without the polyfill assumption.
         { find: 'react-dom/server.browser', replacement: 'react-dom/server.edge' },
       ],
-      dedupe: ['react', 'react-dom'],
     },
     ssr: {
       noExternal: ['react-dom'],
