@@ -3,8 +3,7 @@ compatibility_date = "2025-06-07"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
 
-# Authoring: who can write/create posts. Read-only API endpoints
-# (GET /api/scenes/...) are public; writes require a verified Cloudflare
+# Authoring: who can write/create posts. Writes require a verified Cloudflare
 # Access JWT (`Cf-Access-Jwt-Assertion`) whose `email` claim is in this list
 # and whose `aud` matches CF_ACCESS_AUD.
 #
@@ -17,16 +16,12 @@ pages_build_output_dir = "./dist"
 [vars]
 ADMIN_EMAILS = "n@nvdk.co"
 CF_ACCESS_TEAM_DOMAIN = "navidkhanwip"
-# AUD of the consolidated Access app fronting /admin, /api/posts*, and
-# /api/scenes/*. One app means one session cookie, so editor PUTs from
-# the canvas don't trigger a fresh challenge (which would CORS-fail).
+# AUD of the consolidated Access app fronting /admin and /api/posts*.
 # Auto-written by scripts/setup-access.mjs.
 CF_ACCESS_AUD = "4c8a7a62bf2ac72a6a0ecaa2764edffba7f83422b3e0ca3a7419c1aaa0e1834a"
 
-# Scene storage. KV value is the Excalidraw scene JSON for slug "<slug>",
-# stored under key "scene:<slug>". Post metadata for posts created online
-# is stored under "post:<slug>".
-[[kv_namespaces]]
-binding = "SCENES"
-id = "74782c54096c419397d9fde4495b1d70"
-preview_id = "9d5815080e214f2aacb03280c491da1a"
+# Post storage. Single object "posts.json" in R2 — the full list of posts
+# (slug, title, summary, Excalidraw+ readonly embed URL, publish state).
+[[r2_buckets]]
+binding = "POSTS"
+bucket_name = "nvdk-posts"

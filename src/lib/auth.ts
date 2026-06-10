@@ -39,7 +39,7 @@
  */
 
 export interface RuntimeEnv {
-  SCENES: KVNamespace;
+  POSTS: R2Bucket;
   ADMIN_EMAILS?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
