@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "wrangler pages dev ./dist",
     "deploy": "astro build && wrangler pages deploy dist --project-name=nvdk --branch=main --commit-dirty=true",
-    "seed-kv": "node scripts/seed-kv.mjs",
+    "seed-posts": "node scripts/seed-posts.mjs",
+    "test": "vitest run",
     "astro": "astro"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "typescript": "~5.9.0",
+    "vitest": "^4.1.8",
     "wrangler": "^4.90.0"
   }
 }
