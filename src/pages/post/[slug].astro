@@ -1,8 +1,7 @@
 ---
 /**
- * /post/<slug> — dynamic canvas post page for posts created via /admin
- * (metadata stored in KV). Existing frontmatter posts continue to live at
- * /wip/<slug>/. SSR'd because slugs are not known at build time.
+ * /post/<slug> — a post authored in Excalidraw+, rendered as a full-viewport
+ * iframe of its readonly share link. Metadata comes from posts.json in R2.
  */
 export const prerender = false;
 
@@ -10,18 +9,19 @@ import '../../styles/global.css';
 import '@fontsource/caveat/400.css';
 import '@fontsource/caveat/600.css';
 import TopBar from '../../components/TopBar.astro';
-import ExcalidrawCanvas from '../../components/excalidraw/ExcalidrawCanvas.tsx';
-import { readPostMeta, isSlug } from '../../lib/scenes';
+import { isSlug, readAllPosts } from '../../lib/posts';
 
 const slug = Astro.params.slug;
 if (!isSlug(slug)) return new Response('not found', { status: 404 });
 
-const meta = await readPostMeta(Astro.locals.runtime.env.SCENES, slug);
-if (!meta) return new Response('not found', { status: 404 });
+const posts = await readAllPosts(Astro.locals.runtime.env.POSTS);
+const post = posts.find((p) => p.slug === slug);
+// Unpublished posts 404 publicly — same response as missing, no info leak.
+if (!post || !post.published || !post.embedUrl) return new Response('not found', { status: 404 });
 
 const canonical = new URL(`/post/${slug}/`, Astro.site);
 const ogImage = new URL('/og-default.png', Astro.site);
-const pageTitle = `${meta.title} — Navid Khan — WIP`;
+const pageTitle = `${post.title} — Navid Khan — WIP`;
 ---
 <!doctype html>
 <html lang="en">
@@ -34,31 +34,33 @@ const pageTitle = `${meta.title} — Navid Khan — WIP`;
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="canonical" href={canonical.toString()} />
     <title>{pageTitle}</title>
-    <meta name="description" content={meta.summary} />
-    {meta.draft && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="description" content={post.summary} />
     <meta property="og:type" content="article" />
     <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={meta.summary} />
+    <meta property="og:description" content={post.summary} />
     <meta property="og:url" content={canonical.toString()} />
     <meta property="og:image" content={ogImage.toString()} />
     <style>
       html, body { margin: 0; height: 100%; background: #0a0a0b; }
-      :global(.excalidraw-stage) {
+      .post-embed {
         position: fixed;
         top: var(--topbar-height, 56px);
         left: 0; right: 0; bottom: 0;
-      }
-      :global(.excalidraw .App-toolbar-container) {
-        position: fixed !important;
-        left: 50% !important;
-        bottom: 20px !important;
-        transform: translateX(-50%);
-        z-index: 5;
+        width: 100%;
+        height: calc(100% - var(--topbar-height, 56px));
+        border: 0;
+        display: block;
       }
     </style>
   </head>
   <body>
     <TopBar />
-    <ExcalidrawCanvas client:only="react" slug={slug} />
+    <iframe
+      class="post-embed"
+      src={post.embedUrl}
+      title={post.title}
+      loading="eager"
+      allowfullscreen
+    ></iframe>
   </body>
 </html>

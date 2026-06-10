@@ -7,25 +7,12 @@ import Canvas from '../components/canvas/Canvas.astro';
 import Place from '../components/canvas/Place.astro';
 import Scribble from '../components/canvas/Scribble.astro';
 import PostIt from '../components/canvas/PostIt.astro';
-import { getCollection } from 'astro:content';
 import { loadLayout } from '../utils/layout';
-import { readManyOverrides } from '../lib/scenes';
+import { publishedPosts, readAllPosts } from '../lib/posts';
 
 const layout = loadLayout('index');
 
-const allPosts = await getCollection('posts');
-const overrides = await readManyOverrides(
-  Astro.locals.runtime.env.SCENES,
-  allPosts.map((p) => p.id.replace(/\.mdx?$/, '')),
-);
-// Effective filter: override.published wins if set; else !frontmatter.draft.
-const posts = allPosts
-  .filter((p) => {
-    const slug = p.id.replace(/\.mdx?$/, '');
-    const ov = overrides[slug];
-    return ov ? ov.published : !p.data.draft;
-  })
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = publishedPosts(await readAllPosts(Astro.locals.runtime.env.POSTS));
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -115,8 +102,7 @@ const websiteLd = {
           shifts later. The slot still cycles by index for visual variety. */}
       {posts.map((post, i) => {
         const s = slotFor(i);
-        const slug = post.id.replace(/\.mdx?$/, '');
-        const layoutId = `post-${slug}`;
+        const layoutId = `post-${post.slug}`;
         return (
           <Place
             id={layoutId} saved={layout[layoutId]}
@@ -125,12 +111,12 @@ const websiteLd = {
             mobile={s.mobile}
           >
             <PostIt
-              href={`/wip/${slug}/`}
-              title={post.data.title}
-              summary={post.data.summary || undefined}
-              date={fmtDate(post.data.date)}
+              href={`/post/${post.slug}/`}
+              title={post.title}
+              summary={post.summary || undefined}
+              date={fmtDate(new Date(post.createdAt))}
               color={s.color}
-              slug={slug}
+              slug={post.slug}
             />
           </Place>
         );
@@ -172,34 +158,6 @@ const websiteLd = {
     </Canvas>
   </div>
 </Layout>
-
-<script is:inline>
-  // Hydrate "edited X ago" on each post-it. Static page → fetch per slug after load.
-  // Single GET to /data/meta/<slug>; fail silently (the slot collapses to empty).
-  (() => {
-    const fmtAgo = (iso) => {
-      const sec = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
-      if (sec < 90) return 'edited just now';
-      const min = sec / 60;        if (min < 90)  return `edited ${Math.round(min)}m ago`;
-      const hr  = min / 60;        if (hr  < 36)  return `edited ${Math.round(hr)}h ago`;
-      const day = hr / 24;         if (day < 14)  return `edited ${Math.round(day)}d ago`;
-      const wk  = day / 7;         if (wk  < 10)  return `edited ${Math.round(wk)}w ago`;
-      const mo  = day / 30.4;      if (mo  < 18)  return `edited ${Math.round(mo)}mo ago`;
-      return `edited ${Math.round(day / 365.25)}y ago`;
-    };
-    document.querySelectorAll('.postit[data-slug]').forEach(async (el) => {
-      const slug = el.getAttribute('data-slug');
-      const slot = el.querySelector('[data-slot="edited"]');
-      if (!slug || !slot) return;
-      try {
-        const res = await fetch(`/data/meta/${encodeURIComponent(slug)}`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const { lastEditedAt } = await res.json();
-        if (lastEditedAt) slot.textContent = fmtAgo(lastEditedAt);
-      } catch { /* leave empty */ }
-    });
-  })();
-</script>
 
 <style>
   .canvas-intro {

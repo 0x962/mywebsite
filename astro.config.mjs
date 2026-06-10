@@ -72,6 +72,8 @@ export default defineConfig({
   adapter: cloudflare({
     platformProxy: { enabled: true, configPath: './wrangler.toml' },
   }),
+  // Old canvas-post URLs. Posts live at /post/<slug> now.
+  redirects: { '/wip/[slug]': '/post/[slug]' },
   integrations: [react(), mdx(), sitemap()],
   markdown: {
     shikiConfig: {
