@@ -1,54 +1,15 @@
 ---
 /**
- * /admin — thin SSR shell that loads post data and hands it to the React
- * AdminDashboard component. All interactivity lives in React.
+ * /admin — SSR shell that enforces auth, then mounts the React admin app.
+ * The app itself fetches /api/posts client-side.
  */
 export const prerender = false;
 
-import { getCollection } from 'astro:content';
 import { requireAdmin } from '../../lib/auth';
-import { listPostSlugs, readManyOverrides, readPostMeta } from '../../lib/scenes';
-import AdminDashboard from '../../components/admin/AdminDashboard.tsx';
-import type { PostRow } from '../../components/admin/AdminDashboard.tsx';
+import AdminApp from '../../components/admin/AdminApp.tsx';
 
-const env = Astro.locals.runtime.env;
-const denied = await requireAdmin(Astro.request, env);
+const denied = await requireAdmin(Astro.request, Astro.locals.runtime.env);
 if (denied) return denied;
-
-const collection = await getCollection('posts');
-const collectionSlugs = collection.map((p) => p.id.replace(/\.mdx?$/, ''));
-const overrides = await readManyOverrides(env.SCENES, collectionSlugs);
-
-const collectionPosts: PostRow[] = collection.map((p) => {
-  const slug = p.id.replace(/\.mdx?$/, '');
-  const ov = overrides[slug];
-  const published = ov ? ov.published : !p.data.draft;
-  return {
-    slug,
-    title: p.data.title,
-    date: p.data.date.toISOString(),
-    summary: p.data.summary,
-    published,
-    overridden: ov != null && ov.published !== !p.data.draft,
-    source: 'collection',
-  };
-});
-
-const kvSlugs = await listPostSlugs(env.SCENES);
-const kvMetas = await Promise.all(kvSlugs.map((s) => readPostMeta(env.SCENES, s)));
-const kvPosts: PostRow[] = kvMetas
-  .filter((m): m is NonNullable<typeof m> => Boolean(m))
-  .map((m) => ({
-    slug: m.slug,
-    title: m.title,
-    date: m.date,
-    summary: m.summary,
-    published: !m.draft,
-    overridden: false,
-    source: 'kv',
-  }));
-
-const all = [...collectionPosts, ...kvPosts].sort((a, b) => b.date.localeCompare(a.date));
 ---
 <!doctype html>
 <html lang="en">
@@ -60,6 +21,6 @@ const all = [...collectionPosts, ...kvPosts].sort((a, b) => b.date.localeCompare
     <style>html, body { margin: 0; background: #0a0a0b; min-height: 100vh; }</style>
   </head>
   <body>
-    <AdminDashboard client:only="react" initialPosts={all} />
+    <AdminApp client:only="react" />
   </body>
 </html>
