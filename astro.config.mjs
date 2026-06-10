@@ -69,9 +69,17 @@ export default defineConfig({
         // without the polyfill assumption.
         { find: 'react-dom/server.browser', replacement: 'react-dom/server.edge' },
       ],
+      // Keeps react/react-dom resolving to a single ESM copy in the dev SSR
+      // (workerd) environment — without it Vite loads the CJS server.node
+      // build and dies on `require is not defined`.
+      dedupe: ['react', 'react-dom'],
     },
     ssr: {
-      noExternal: ['react-dom'],
+      // Bundle react-dom only for the Workers build (rollup's CJS plugin
+      // handles its CJS entries there). In dev, leave it external so Node
+      // loads the CJS build natively — Vite's ESM SSR runner can't execute
+      // it ("require is not defined").
+      noExternal: process.argv.includes('build') ? ['react-dom'] : [],
     },
     server: {
       fs: { strict: false },
