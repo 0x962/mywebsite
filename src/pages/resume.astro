@@ -1,0 +1,120 @@
+---
+export const prerender = true;
+import Layout from '../components/Layout.astro';
+
+const updated = 'June 2026';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Navid Khan',
+  url: 'https://nvdk.co/resume/',
+  jobTitle: 'Lead Engineer',
+  worksFor: { '@type': 'Organization', name: 'Canary Technologies' },
+};
+---
+<Layout
+  title="Navid Khan — Résumé"
+  description="Résumé of Navid Khan — Lead Engineer on Canary's Agentic Kiosk, two-time founder building products at early-stage startups."
+  canonicalPath="/resume/"
+  jsonLd={jsonLd}
+>
+  <main class="resume-page">
+    <header class="resume-head">
+      <h1>Résumé</h1>
+      <p class="lede">
+        Lead Engineer on Canary's Agentic Kiosk; two-time founder building products at
+        early-stage startups. The full document below, updated {updated}.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/resume.pdf" download="Navid-Khan-Resume.pdf">Download PDF</a>
+        <a class="btn" href="/resume.pdf" target="_blank" rel="noopener">Open in new tab ↗</a>
+      </div>
+    </header>
+
+    <object
+      class="resume-embed"
+      data="/resume.pdf#view=FitH"
+      type="application/pdf"
+      aria-label="Navid Khan — résumé (PDF)"
+    >
+      <p class="embed-fallback">
+        Your browser can't display the embedded PDF.
+        <a href="/resume.pdf" target="_blank" rel="noopener">Open the résumé in a new tab ↗</a>
+      </p>
+    </object>
+  </main>
+
+  <style>
+    .resume-page {
+      max-width: var(--content-width);
+      margin: 0 auto;
+      padding: calc(var(--topbar-height) + 48px) 24px 96px;
+    }
+    .resume-head h1 {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 2rem;
+      letter-spacing: -0.01em;
+    }
+    .lede {
+      margin-top: 10px;
+      max-width: 54ch;
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 16px;
+      border: 1px solid var(--border-color-strong);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--accent-color);
+      color: #fff;
+    }
+    .btn-primary {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #2f72e0;
+      border-color: #2f72e0;
+    }
+    .resume-embed {
+      display: block;
+      width: 100%;
+      height: min(86vh, 1100px);
+      margin-top: 32px;
+      border: 1px solid var(--border-color-strong);
+      border-radius: 10px;
+      background: #18181b;
+    }
+    .embed-fallback {
+      padding: 28px;
+      color: var(--text-secondary);
+    }
+    .embed-fallback a {
+      color: var(--accent-color);
+    }
+    @media (max-width: 640px) {
+      .resume-embed {
+        height: 72vh;
+      }
+    }
+  </style>
+</Layout>

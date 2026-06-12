@@ -1,7 +1,7 @@
 {
   "intro": { "desktop": { "x": 34, "y": 30, "rotate": -1 } },
-  "jot": { "desktop": { "x": 801, "y": 349, "rotate": -4 } },
-  "squiggle": { "desktop": { "x": 1090, "y": 391, "rotate": 8 } },
+  "jot": { "desktop": { "x": 730, "y": 384, "rotate": -4 } },
+  "squiggle": { "desktop": { "x": 1040, "y": 480, "rotate": 8 } },
   "underline": { "desktop": { "x": 128, "y": 235, "rotate": 0 } },
-  "post-plot": { "desktop": { "x": 934, "y": 157, "rotate": 3 } }
+  "arrow": { "desktop": { "x": 540, "y": 140, "rotate": -6 } }
 }

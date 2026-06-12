@@ -22,29 +22,29 @@ const fmtDate = (d: Date) =>
 const slots = [
   {
     color: 'amber' as const,
-    desktop: { x: 812, y: 96, rotate: 3, w: 268, z: 3 },
+    desktop: { x: 710, y: 90, rotate: 2, w: 268, z: 3 },
     tablet: { x: 96, y: 372, rotate: 2, w: 280 },
     mobile: { x: 22, y: 452, rotate: 1, w: 330 },
   },
   {
     color: 'blue' as const,
-    desktop: { x: 690, y: 432, rotate: -3, w: 268, z: 2 },
+    desktop: { x: 990, y: 90, rotate: -2, w: 268, z: 2 },
     tablet: { x: 392, y: 540, rotate: -2, w: 280 },
-    mobile: { x: 32, y: 636, rotate: -1.5, w: 330 },
+    mobile: { x: 32, y: 700, rotate: -1.5, w: 330 },
   },
   {
     color: 'green' as const,
-    desktop: { x: 968, y: 556, rotate: 2, w: 268, z: 2 },
-    tablet: { x: 150, y: 724, rotate: 1.5, w: 280 },
-    mobile: { x: 22, y: 824, rotate: 1, w: 330 },
+    desktop: { x: 710, y: 430, rotate: 3, w: 268, z: 2 },
+    tablet: { x: 96, y: 770, rotate: 1.5, w: 280 },
+    mobile: { x: 22, y: 1000, rotate: 1, w: 330 },
   },
 ];
 const slotFor = (i: number) =>
   slots[i] ?? {
     color: (['amber', 'blue', 'green', 'pink', 'paper'] as const)[i % 5],
     desktop: { x: 820, y: 760 + (i - 3) * 230, rotate: i % 2 ? 2 : -2, w: 268, z: 2 },
-    tablet: { x: 150, y: 920 + (i - 3) * 230, rotate: i % 2 ? 2 : -2, w: 280 },
-    mobile: { x: 24, y: 860 + (i - 3) * 200, rotate: i % 2 ? 1 : -1, w: 320 },
+    tablet: { x: 392, y: 920 + (i - 3) * 230, rotate: i % 2 ? 2 : -2, w: 280 },
+    mobile: { x: 24, y: 1160 + (i - 3) * 200, rotate: i % 2 ? 1 : -1, w: 320 },
   };
 
 const personLd = {
@@ -75,7 +75,7 @@ const websiteLd = {
   jsonLd={[personLd, websiteLd]}
 >
   <div class="canvas-page">
-    <Canvas page="index" width={1280} height={920} tabletHeight={1000} mobileHeight={1010}>
+    <Canvas page="index" width={1280} height={920} tabletHeight={1000} mobileHeight={1140}>
       <h1 class="sr-only">Navid Khan — an open workspace of work-in-progress notes</h1>
 
       {/* The intro, in cursive — the voice of the place. */}
