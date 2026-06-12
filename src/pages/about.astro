@@ -62,7 +62,7 @@ const rnd = (i: number, s: number) => {
   return v - Math.floor(v);
 };
 const footerW = { desktop: 1280, tablet: 760, mobile: 380 };
-const bandTop = { desktop: 3500, tablet: 6580, mobile: 8210 };
+const bandTop = { desktop: 3500, tablet: 6580, mobile: 9100 };
 const BAND_H = 122;
 const footerPos = (dd: (typeof doodles)[number], i: number, bp: keyof typeof footerW, sx: number, sy: number) => {
   const w = footerW[bp];
@@ -123,7 +123,7 @@ const personLd = {
       <Place id="portrait" saved={layout.portrait}
         x={808} y={20} rotate={-3} z={4} w={250}
         tablet={{ x: 260, y: 289, rotate: -3, w: 240 }}
-        mobile={{ x: 80, y: 329, rotate: -3, w: 220 }}>
+        mobile={{ x: 80, y: 445, rotate: -3, w: 220 }}>
         <Polaroid src="/images/profile.png" alt="Portrait of Navid Khan" caption="me" />
       </Place>
 
@@ -131,7 +131,7 @@ const personLd = {
       <Place id="t-intro" saved={layout['t-intro']}
         x={96} y={140} w={560}
         tablet={{ x: 40, y: 141, w: 600 }}
-        mobile={{ x: 20, y: 126, w: 340 }}>
+        mobile={{ x: 20, y: 134, w: 340 }}>
         <div class="scrap-text">
           <p>Hi, I'm Navid. I'm a software engineer (I think?).</p>
           <p>I grew up in <strong>Siliguri</strong> — a small city in the foothills of the
@@ -143,28 +143,28 @@ const personLd = {
       <Place id="think-arrow" saved={layout['think-arrow']}
         x={486} y={150} rotate={180} z={6}
         tablet={{ x: 470, y: 150, rotate: 180 }}
-        mobile={{ x: 60, y: 214, rotate: 180 }}>
+        mobile={{ x: 40, y: 352, rotate: 180 }}>
         <Scribble type="arrow" w={64} h={38} seed={4} color="var(--text-secondary)" />
       </Place>
 
       <Place id="think-text" saved={layout['think-text']}
         x={560} y={140} rotate={-3} z={6} w={210}
         tablet={{ x: 545, y: 140, rotate: -3, w: 210 }}
-        mobile={{ x: 135, y: 206, rotate: -3, w: 210 }}>
+        mobile={{ x: 120, y: 345, rotate: -3, w: 210 }}>
         <span class="scrap-hand">(AI has taken over)</span>
       </Place>
 
       <Place id="map" saved={layout.map}
         x={756} y={389} rotate={2} z={2} w={290}
         tablet={{ x: 240, y: 665, rotate: 2, w: 280 }}
-        mobile={{ x: 40, y: 675, rotate: 2, w: 300 }}>
+        mobile={{ x: 40, y: 799, rotate: 2, w: 300 }}>
         <Polaroid src="/images/siliguri-map.png" alt="Map of South Asia with Siliguri marked between Nepal, Bhutan, and Bangladesh" caption="South Asia — Siliguri marked" />
       </Place>
 
       <Place id="t-coconut" saved={layout['t-coconut']}
         x={112} y={347} rotate={0.4} w={560}
         tablet={{ x: 40, y: 1025, w: 600 }}
-        mobile={{ x: 20, y: 1051, w: 340 }}>
+        mobile={{ x: 20, y: 1183, w: 340 }}>
         <div class="scrap-text">
           <p>It was a quiet town then, with weather that still knew how to behave — this was
           before global warming taught it otherwise. Now Siliguri boils for most of the year, like
@@ -183,7 +183,7 @@ const personLd = {
       <Place id="t-bus" saved={layout['t-bus']}
         x={88} y={763} rotate={-0.4} w={560}
         tablet={{ x: 40, y: 1412, w: 600 }}
-        mobile={{ x: 20, y: 1697, w: 340 }}>
+        mobile={{ x: 20, y: 1866, w: 340 }}>
         <div class="scrap-text">
           <p>Down the same road, a little shop at the corner doubled as our bus stop. Every morning
           we waited there in the half-light for the school bus — really just a city bus, moonlighting.
@@ -200,7 +200,7 @@ const personLd = {
       <Place id="t-bicycle" saved={layout['t-bicycle']}
         x={108} y={1150} rotate={0.5} w={560}
         tablet={{ x: 40, y: 1711, w: 600 }}
-        mobile={{ x: 20, y: 2167, w: 340 }}>
+        mobile={{ x: 20, y: 2490, w: 340 }}>
         <div class="scrap-text">
           <p>There was a wide, dusty playground nearby with a few half-broken rides, and I spent
           most of my childhood on a bicycle — first a small red one, then a bigger black one —
@@ -213,28 +213,28 @@ const personLd = {
       <Place id="p-city" saved={layout['p-city']}
         x={686} y={900} rotate={-3} z={2} w={158}
         tablet={{ x: 267, y: 1878, rotate: -3, w: 226 }}
-        mobile={{ x: 40, y: 2416, rotate: -3, w: 300 }}>
+        mobile={{ x: 40, y: 2747, rotate: -3, w: 300 }}>
         <Polaroid src="/images/siliguri-city.jpg" alt="Aerial view of Siliguri" caption="Siliguri" />
       </Place>
 
       <Place id="p-tea" saved={layout['p-tea']}
         x={858} y={900} rotate={2} z={2} w={158}
         tablet={{ x: 267, y: 2101, rotate: 2, w: 226 }}
-        mobile={{ x: 40, y: 2681, rotate: 2, w: 300 }}>
+        mobile={{ x: 40, y: 3020, rotate: 2, w: 300 }}>
         <Polaroid src="/images/siliguri-tea.jpg" alt="Tea gardens around Siliguri" caption="tea gardens" />
       </Place>
 
       <Place id="p-bridge" saved={layout['p-bridge']}
         x={1030} y={900} rotate={-2} z={2} w={158}
         tablet={{ x: 235, y: 2320, rotate: -2, w: 290 }}
-        mobile={{ x: 30, y: 2940, rotate: -2, w: 320 }}>
+        mobile={{ x: 30, y: 3287, rotate: -2, w: 320 }}>
         <Polaroid src="/images/siliguri-bridge.jpg" alt="Coronation Bridge over the Teesta near Siliguri" caption="Coronation Bridge" />
       </Place>
 
       <Place id="t-move" saved={layout['t-move']}
         x={96} y={1316} rotate={-0.4} w={560}
         tablet={{ x: 40, y: 2628, w: 600 }}
-        mobile={{ x: 20, y: 3267, w: 340 }}>
+        mobile={{ x: 20, y: 3622, w: 340 }}>
         <div class="scrap-text">
           <p>I've never known a city that completely since. I spent about ten years in the
           Delhi–Gurgaon sprawl after school and learned the routes between home and work and a
@@ -247,7 +247,7 @@ const personLd = {
       <Place id="t-aditi" saved={layout['t-aditi']}
         x={104} y={1556} rotate={0.4} w={560}
         tablet={{ x: 40, y: 2868, w: 600 }}
-        mobile={{ x: 20, y: 3590, w: 340 }}>
+        mobile={{ x: 20, y: 3953, w: 340 }}>
         <div class="scrap-text">
           <p>I live here with <span class="aditi-name"><strong>Aditi</strong><Scribble type="heart" w={14} h={12} color="#ff5d73" roughness={0.9} strokeWidth={1.4} seed={3} class="mh mh1" /><Scribble type="heart" w={10} h={9} color="#ff9ecb" roughness={0.9} strokeWidth={1.3} seed={5} class="mh mh2" /><Scribble type="heart" w={12} h={11} color="#ff5d73" roughness={0.9} strokeWidth={1.4} seed={7} class="mh mh3" /><Scribble type="heart" w={9} h={8} color="#ff9ecb" roughness={0.9} strokeWidth={1.3} seed={9} class="mh mh4" /></span>, my wife. I'm prouder of her than of anything
           I've built — of who she is, and of the work she does at <a href="https://womenfirstfund.org/" rel="noopener">Women First</a>.
@@ -263,21 +263,21 @@ const personLd = {
       <Place id="p-obi" saved={layout['p-obi']}
         x={700} y={1460} rotate={3} z={2} w={230}
         tablet={{ x: 235, y: 3063, rotate: 3, w: 290 }}
-        mobile={{ x: 40, y: 3926, rotate: 3, w: 300 }}>
+        mobile={{ x: 40, y: 4326, rotate: 3, w: 300 }}>
         <Polaroid src="/images/obi.jpg" alt="Obi, our long-haired grey cat, asleep on a window hammock" caption="Obi" />
       </Place>
 
       <Place id="p-zuzu" saved={layout['p-zuzu']}
         x={946} y={1460} rotate={-3} z={2} w={220}
         tablet={{ x: 235, y: 3534, rotate: -3, w: 290 }}
-        mobile={{ x: 40, y: 4407, rotate: -3, w: 300 }}>
+        mobile={{ x: 40, y: 4815, rotate: -3, w: 300 }}>
         <Polaroid src="/images/zuzu.jpg" alt="Zuzu, our tabby cat with a white belly, curled up grooming" caption="Zuzu" />
       </Place>
 
       <Place id="t-canada" saved={layout['t-canada']}
         x={92} y={1766} rotate={-0.3} w={560}
         tablet={{ x: 40, y: 4126, w: 600 }}
-        mobile={{ x: 20, y: 5013, w: 340 }}>
+        mobile={{ x: 20, y: 5429, w: 340 }}>
         <div class="scrap-text">
           <p>I like it here. The thing I miss most, absurdly, is 220&nbsp;volts — back home the
           microwaves hit harder and the hair dryers actually meant business.</p>
@@ -295,14 +295,14 @@ const personLd = {
       <Place id="p-antarctica1" saved={layout['p-antarctica1']}
         x={700} y={2010} rotate={-2} z={2} w={280}
         tablet={{ x: 230, y: 4470, rotate: -2, w: 300 }}
-        mobile={{ x: 30, y: 5527, rotate: -2, w: 320 }}>
+        mobile={{ x: 30, y: 6040, rotate: -2, w: 320 }}>
         <Polaroid src="/images/antarctica-1.jpg" alt="Aditi and Navid bundled up on a snowy slope in Antarctica" caption="Antarctica" />
       </Place>
 
       <Place id="p-antarctica2" saved={layout['p-antarctica2']}
         x={992} y={2010} rotate={3} z={2} w={280}
         tablet={{ x: 230, y: 4786, rotate: 3, w: 300 }}
-        mobile={{ x: 30, y: 5854, rotate: 3, w: 320 }}>
+        mobile={{ x: 30, y: 6375, rotate: 3, w: 320 }}>
         <Polaroid src="/images/antarctica-2.jpg" alt="Two people play-fighting on the ice with an expedition ship and icebergs behind" caption="the end of the world" />
       </Place>
 
@@ -316,7 +316,7 @@ const personLd = {
       <Place id="t-career" saved={layout['t-career']}
         x={96} y={2186} rotate={-0.4} w={560}
         tablet={{ x: 40, y: 5107, w: 600 }}
-        mobile={{ x: 20, y: 6187, w: 340 }}>
+        mobile={{ x: 20, y: 6716, w: 340 }}>
         <div class="scrap-text">
           <p>I've been a software engineer for twelve years. Like a lot of us, I started by
           teaching myself, and I've kept teaching myself most of what I know since. I'm proud of
@@ -330,7 +330,7 @@ const personLd = {
       <Place id="t-bigdrop" saved={layout['t-bigdrop']}
         x={108} y={2560} rotate={0.4} w={560}
         tablet={{ x: 40, y: 5422, w: 600 }}
-        mobile={{ x: 20, y: 6673, w: 340 }}>
+        mobile={{ x: 20, y: 7135, w: 340 }}>
         <div class="scrap-text">
           <p>I never really decided to start a company; I just wanted to build, and one thing led
           to the next. I was already building in university, spending far more time on my own code
@@ -345,21 +345,21 @@ const personLd = {
       <Place id="logo-bigdrop" saved={layout['logo-bigdrop']}
         x={688} y={2500} rotate={-4} z={3} w={150}
         tablet={{ x: 600, y: 4145, rotate: -4, w: 120 }}
-        mobile={{ x: 235, y: 6486, rotate: -4, w: 110 }}>
+        mobile={{ x: 135, y: 7554, rotate: -4, w: 110 }}>
         <img class="logo-mark" src="/images/bigdrop-logo.png" alt="Big Drop logo" loading="lazy" />
       </Place>
 
       <Place id="p-niet" saved={layout['p-niet']}
         x={744} y={2600} rotate={-3} z={2} w={330}
         tablet={{ x: 230, y: 5692, rotate: -3, w: 300 }}
-        mobile={{ x: 30, y: 7084, rotate: -3, w: 320 }}>
+        mobile={{ x: 30, y: 7719, rotate: -3, w: 320 }}>
         <Polaroid src="/images/niet.webp" alt="Aerial view of NIET campus" caption="NIET — the one I left 🤮" />
       </Place>
 
       <Place id="t-canary" saved={layout['t-canary']}
         x={92} y={2859} rotate={-0.3} w={560}
         tablet={{ x: 40, y: 5919, w: 600 }}
-        mobile={{ x: 20, y: 7316, w: 340 }}>
+        mobile={{ x: 20, y: 7959, w: 340 }}>
         <div class="scrap-text">
           <p>After that came <strong>Square1</strong> — meant to be a Shopify for India, before
           Shopify itself arrived and got big there. It went through India Accelerator and the Global
@@ -374,14 +374,14 @@ const personLd = {
       <Place id="logo-square1" saved={layout['logo-square1']}
         x={684} y={2872} rotate={4} z={3} w={120}
         tablet={{ x: 612, y: 5919, rotate: 4, w: 96 }}
-        mobile={{ x: 250, y: 7250, rotate: 4, w: 92 }}>
+        mobile={{ x: 144, y: 8377, rotate: 4, w: 92 }}>
         <img class="logo-mark" src="/images/square1-logo.png" alt="Square1 logo" loading="lazy" />
       </Place>
 
       <Place id="t-close" saved={layout['t-close']}
         x={104} y={3128} rotate={0.4} w={560}
         tablet={{ x: 40, y: 6188, w: 600 }}
-        mobile={{ x: 20, y: 7726, w: 340 }}>
+        mobile={{ x: 20, y: 8523, w: 340 }}>
         <div class="scrap-text">
           <p>I'm electrified by what AI has cracked open — it's most of what I think about now, and
           I want to build so much more.</p>
@@ -395,14 +395,14 @@ const personLd = {
       <Place id="aside-code" saved={layout['aside-code']}
         x={712} y={3150} rotate={-5} z={3} w={300}
         tablet={{ x: 360, y: 6520, rotate: -5, w: 320 }}
-        mobile={{ x: 24, y: 8520, rotate: -4, w: 320 }}>
+        mobile={{ x: 24, y: 8854, rotate: -4, w: 320 }}>
         <p class="scrap-aside">When I'm tired from work, I code to relax.</p>
       </Place>
 
       <Place id="email" saved={layout.email}
         x={104} y={3349} rotate={-1} z={3} w={520}
         tablet={{ x: 40, y: 6428, w: 600 }}
-        mobile={{ x: 20, y: 8078, w: 340 }}>
+        mobile={{ x: 20, y: 8991, w: 340 }}>
         <p class="scrap-email">Reach me at n@nvdk.co.</p>
       </Place>
 
