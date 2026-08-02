@@ -7,12 +7,24 @@ import Canvas from '../components/canvas/Canvas.astro';
 import Place from '../components/canvas/Place.astro';
 import Scribble from '../components/canvas/Scribble.astro';
 import PostIt from '../components/canvas/PostIt.astro';
-import { loadLayout } from '../utils/layout';
+import CanvasItem from '../components/canvas/CanvasItem.astro';
+import { loadLayout, mergeLayouts } from '../utils/layout';
 import { publishedPosts, readAllPosts } from '../lib/posts';
+import { readLayout } from '../lib/layouts';
+import { readItems } from '../lib/items';
 
-const layout = loadLayout('index');
+const env = Astro.locals.runtime.env;
 
-const posts = publishedPosts(await readAllPosts(Astro.locals.runtime.env.POSTS));
+// Layout = committed build-time baseline, with the owner's live R2 drags on top.
+// Visitors then rearrange client-side (their copy in localStorage); the owner's
+// drags here become the shared baseline everyone loads.
+const layout = mergeLayouts(loadLayout('index'), await readLayout(env.POSTS, 'index'));
+
+const posts = publishedPosts(await readAllPosts(env.POSTS));
+
+// Owner-authored items added live from the page ("add to the desk"). Each is
+// placed by its own saved position when the owner has dragged it.
+const items = await readItems(env.POSTS, 'index');
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -75,7 +87,7 @@ const websiteLd = {
   jsonLd={[personLd, websiteLd]}
 >
   <div class="canvas-page">
-    <Canvas page="index" width={1280} height={920} tabletHeight={1000} mobileHeight={1140}>
+    <Canvas page="index" width={1280} height={920} tabletHeight={1000} mobileHeight={1140} interactive>
       <h1 class="sr-only">Navid Khan — an open workspace of work-in-progress notes</h1>
 
       {/* The intro, in cursive — the voice of the place. */}
@@ -121,6 +133,17 @@ const websiteLd = {
           </Place>
         );
       })}
+
+      {/* Owner-authored items (links, notes, images, embeds) added live from
+          the page. Keyed by item id so saved drag positions reattach. */}
+      {items.map((item) => (
+        <Place
+          id={item.id} saved={layout[item.id]} class="cv-item"
+          x={item.x} y={item.y} rotate={item.rotate ?? 0} z={item.z ?? 5} w={item.w}
+        >
+          <CanvasItem item={item} />
+        </Place>
+      ))}
 
       {/* Decoration — all aria-hidden, drawn last so it never leads the reading order. */}
       <Place

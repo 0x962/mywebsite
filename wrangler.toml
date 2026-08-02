@@ -16,7 +16,7 @@ pages_build_output_dir = "./dist"
 [vars]
 ADMIN_EMAILS = "n@nvdk.co"
 CF_ACCESS_TEAM_DOMAIN = "navidkhanwip"
-# AUD of the consolidated Access app fronting /admin and /api/posts*.
+# AUD of the consolidated Access app fronting /admin, /api/posts* and /api/layout*.
 # Auto-written by scripts/setup-access.mjs.
 CF_ACCESS_AUD = "4c8a7a62bf2ac72a6a0ecaa2764edffba7f83422b3e0ca3a7419c1aaa0e1834a"
 

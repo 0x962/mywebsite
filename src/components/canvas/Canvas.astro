@@ -25,6 +25,8 @@ interface Props {
   mobileHeight?: number;
   /** Cap the zoom-to-fill scale (default: uncapped). */
   maxScale?: number;
+  /** Let any visitor drag placed items around (the public "desktop"). */
+  interactive?: boolean;
   class?: string;
 }
 
@@ -37,6 +39,7 @@ const {
   mobileWidth = 380,
   mobileHeight = tabletHeight,
   maxScale,
+  interactive = false,
   class: className,
 } = Astro.props;
 
@@ -50,7 +53,7 @@ const vars = [
   ...(maxScale ? [`--cv-max-scale:${maxScale}`] : []),
 ].join(';');
 ---
-<div class:list={['canvas', className]} data-canvas data-cv-page={page} style={vars}>
+<div class:list={['canvas', className]} data-canvas data-cv-page={page} data-cv-interactive={interactive ? '' : undefined} style={vars}>
   <div class="canvas-stage" data-canvas-stage>
     <slot />
   </div>
@@ -60,9 +63,14 @@ const vars = [
   import { initCanvases } from '../../scripts/canvas';
   initCanvases();
 
-  // Drag editor is dev-only (dead-code-eliminated from prod builds) AND only
-  // activates with ?edit in the URL — so local viewing stays click-through.
+  // Two mutually-exclusive interaction layers:
+  //  • dev `?edit`  → the authoring drag editor (saves the committed build file);
+  //                   dev-only, dead-code-eliminated from prod.
+  //  • interactive  → the public "desktop": any visitor can drag tiles, guests
+  //                   persist locally, the owner persists to R2 for everyone.
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('edit')) {
     import('../../scripts/canvas-editor').then((m) => m.initCanvasEditor());
+  } else if (document.querySelector('[data-canvas][data-cv-interactive]')) {
+    import('../../scripts/canvas-desktop').then((m) => m.initCanvasDesktop());
   }
 </script>
